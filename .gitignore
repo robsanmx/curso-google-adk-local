@@ -36,3 +36,7 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Google ADK local runtime storage
+.adk/
+**/.adk/

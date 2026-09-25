@@ -1000,9 +1000,51 @@ Basado en las recomendaciones del equipo de **Google Agents-CLI**:
 2. **Temperatura Baja en Modelos Locales:** Usa `temperature=0.1` o `0.2` para asegurar que las llamadas a herramientas y formatos JSON no alucinen.
 3. **Limpieza de Historial Conversacional:** En subagentes especializados, usa `include_contents='none'` para que no carguen el historial del diálogo padre.
 4. **Evaluaciones con Datasets:** Usa `agents-cli eval run` con criterios de "LLM-as-a-judge" antes de pasar cualquier agente a producción.
-5. **Observabilidad:** Monitoriza eventos de parada, tiempos de respuesta y tokens mediante OpenTelemetry.
+5. **Observabilidad:** Monitoriza eventos de parada, tiempos de respuesta y tokens mediante OpenTelemetry."""))
 
----
+    cells.append(make_cell("markdown", """### 9.1 Catálogo Completo de Agentes en ADK Web (`adk web agents`)
+
+Hemos transformado **todos los agentes del curso** en paquetes modulares dentro del directorio `agents/`:
+
+| Subcarpeta | Agente | Arquitectura / Módulo |
+|---|---|---|
+| `agents/single_state_agent` | `single_state_agent` | Single-Agent con inyección de estado (Módulo 1) |
+| `agents/devops_tools_agent` | `devops_tools_agent` | Herramientas Kubernetes y métricas (Módulo 1) |
+| `agents/hitl_agent` | `hitl_agent` | Human-in-the-Loop y confirmación interactiva (Módulo 1) |
+| `agents/sequential_agent` | `sequential_agent` | Pipeline secuencial Linter $\\\\rightarrow$ Refactor (Módulo 2) |
+| `agents/parallel_agent` | `parallel_agent` | Auditoría concurrente triple con síntesis ejecutiva (Módulo 2) |
+| `agents/loop_agent` | `loop_agent` | Bucle iterativo de optimización con `EscalationChecker` (Módulo 2) |
+| `agents/graph_workflow_agent` | `graph_workflow_agent` | Grafo de enrutamiento condicional dinámico (Módulo 3) |
+| `agents/agent_tool_orchestrator` | `agent_tool_orchestrator` | Patrón `AgentTool` como subagente especialista (Módulo 4) |
+| `agents/task_delegation_agent` | `task_delegation_agent` | Delegación en Task Mode con validación Pydantic (Módulo 4) |
+| `agents/capstone_agency` | `capstone_agency` | Consultora de Arquitectura y Seguridad Capstone (Proyecto Final) |
+
+#### 🌐 Cómo lanzar el panel completo en tu navegador:
+```bash
+adk web agents --port 8000
+```
+*(O directamente: `.venv/bin/adk web agents --port 8000`)*
+
+Luego abre **[http://localhost:8000](http://localhost:8000)**: En la esquina superior izquierda encontrarás el menú desplegable para alternar y probar cualquiera de los 10 agentes interactivamente con tu LLM local."""))
+
+    cells.append(make_cell("code", """from google.adk.cli.utils.agent_loader import AgentLoader
+
+# Verificamos programáticamente el catálogo completo de agentes
+loader = AgentLoader("agents")
+agentes_disponibles = loader.list_agents()
+
+print(f"📦 Se encontraron {len(agentes_disponibles)} agentes listos para ADK Web:\\n")
+for nombre in agentes_disponibles:
+    agente = loader.load_agent(nombre)
+    tipo_cls = type(agente).__name__
+    desc = getattr(agente, "description", "")[:60]
+    print(f"  ✓ {nombre:<26} [{tipo_cls:<15}] -> {desc}...")
+
+print("\\n🚀 Para ejecutarlos todos a la vez en la interfaz web:")
+print("   adk web agents --port 8000")
+"""))
+
+    cells.append(make_cell("markdown", """---
 **¡Felicitaciones! Has dominado Google ADK 2.0 y la construcción de sistemas multi-agente en local.**
 """))
 
