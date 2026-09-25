@@ -70,7 +70,20 @@ Habilitamos `nest_asyncio` para poder ejecutar llamadas asíncronas (`asyncio.ru
 import nest_asyncio
 nest_asyncio.apply()
 
-print("✓ nest_asyncio configurado correctamente para Jupyter Notebook.")
+def extraer_texto(event) -> str:
+    # Extrae de forma segura el texto o detalles de herramientas de un evento
+    if not event or not getattr(event, 'content', None):
+        return ''
+    if getattr(event.content, 'parts', None):
+        parts_text = [p.text for p in event.content.parts if getattr(p, 'text', None)]
+        if parts_text:
+            return ' '.join(parts_text)
+        tool_calls = [f"[Llamada a tool: {p.function_call.name}]" for p in event.content.parts if getattr(p, 'function_call', None)]
+        if tool_calls:
+            return ' '.join(tool_calls)
+    return str(event.content or '')
+
+print("✓ nest_asyncio y utilidades configurados correctamente.")
 """))
 
     # -------------------------------------------------------------
@@ -88,15 +101,31 @@ Google ADK utiliza el adaptador `google.adk.models.lite_llm.LiteLlm` para conect
 from google.adk.models.lite_llm import LiteLlm
 
 def get_local_model(provider="ollama", model_name=None, temperature=0.2):
-    \"\"\"Instancia el modelo local configurado para Google ADK 2.0.\"\"\"
+    \"\"\"Instancia el modelo local configurado para Google ADK 2.0.
+    Detecta automáticamente modelos disponibles en Ollama local si no se especifica model_name.
+    \"\"\"
     provider = provider.lower()
     
     if provider == "ollama":
-        target = model_name or "qwen2.5:7b-instruct"
+        api_base = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        if not model_name:
+            try:
+                import urllib.request, json
+                with urllib.request.urlopen(f"{api_base}/api/tags", timeout=1.5) as r:
+                    models = [m["name"] for m in json.loads(r.read().decode()).get("models", [])]
+                    for preferred in ["llama3.2:latest", "llama3.2", "qwen3:4b", "llama3.1:8b", "qwen2.5-coder:14b", "qwen2.5:7b-instruct", "mistral-nemo:latest"]:
+                        if preferred in models:
+                            model_name = preferred
+                            break
+                    if not model_name and models:
+                        model_name = models[0]
+            except Exception:
+                pass
+        target = model_name or "llama3.2:latest"
         model_str = f"ollama_chat/{target}" if not target.startswith("ollama_chat/") else target
         return LiteLlm(
             model=model_str,
-            api_base=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+            api_base=api_base,
             temperature=temperature
         )
     elif provider == "lmstudio":
@@ -120,8 +149,8 @@ def get_local_model(provider="ollama", model_name=None, temperature=0.2):
     else:
         raise ValueError(f"Proveedor '{provider}' no soportado.")
 
-# Inicializamos el modelo para todo el notebook (puedes cambiar 'ollama' por 'lmstudio' o 'mlx')
-local_model = get_local_model(provider="ollama", model_name="qwen2.5:7b-instruct")
+# Inicializamos el modelo para todo el notebook (auto-detecta Ollama o cámbialo a 'lmstudio' / 'mlx')
+local_model = get_local_model(provider="ollama")
 endpoint = getattr(local_model, "_additional_args", {}).get("api_base", "default")
 print(f"✓ Modelo local configurado: {local_model.model} (endpoint: {endpoint})")
 """
@@ -158,10 +187,11 @@ asistente_dev = Agent(
 
 # 2. Configurar la sesión y el Runner
 session_service = InMemorySessionService()
-runner = Runner(agent=asistente_dev, app_name=\"asistente_dev_app\", session_service=session_service)
+runner = Runner(agent=asistente_dev, app_name="asistente_dev_app", session_service=session_service)
 
 # 3. Crear sesión con variables de estado iniciales
 session = await session_service.create_session(
+    app_name="asistente_dev_app",
     session_id="sesion_01_single",
     user_id="roberto",
     state={
@@ -176,15 +206,15 @@ print(f"👤 [Usuario]: {prompt}\\n")
 print("🤖 [Agente]:")
 
 async for event in runner.run_async(session_id=session.id, user_id="roberto", prompt=prompt):
-    if event.content:
-        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+    text = extraer_texto(event)
+    if text:
         print(text)
 
 # 5. Comprobar que output_key guardó el valor en session.state
-sesion_actualizada = await session_service.get_session(session_id=session.id, user_id="roberto")
+sesion_actualizada = await session_service.get_session(app_name="asistente_dev_app", session_id=session.id, user_id="roberto")
 print("\\n" + "=" * 50)
 print("✓ Clave guardada en session.state['respuesta_asistente']:")
-print(sesion_actualizada.state.get("respuesta_asistente")[:150] + "...")
+print(str(sesion_actualizada.state.get("respuesta_asistente") or "")[:150] + "...")
 """))
 
     # -------------------------------------------------------------
@@ -249,11 +279,12 @@ agente_monitor = Agent(
 )
 
 session_tools = await session_service.create_session(
+    app_name="agente_monitor_app",
     session_id="sesion_02_tools",
     user_id="sysadmin",
     state={"alertas_sistema": []}
 )
-runner_tools = Runner(agent=agente_monitor, app_name=\"agente_monitor_app\", session_service=session_service)
+runner_tools = Runner(agent=agente_monitor, app_name="agente_monitor_app", session_service=session_service)
 
 consulta = "Consulta el estado del hardware de este equipo y dime si está operativo."
 print(f"👤 [Usuario]: {consulta}\\n")
@@ -261,8 +292,8 @@ print(f"👤 [Usuario]: {consulta}\\n")
 async for event in runner_tools.run_async(session_id=session_tools.id, user_id="sysadmin", prompt=consulta):
     if hasattr(event, "actions") and event.actions:
         print(f"⚙️ [Tool Action invocada]: {event.actions}")
-    if event.content:
-        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+    text = extraer_texto(event)
+    if text:
         print(f"🤖 [Agente]:\\n{text}")
 """))
 
@@ -310,8 +341,8 @@ agente_ops = Agent(
     tools=[tool_reinicio_seguro]
 )
 
-session_hitl = await session_service.create_session(session_id="sesion_03_hitl", user_id="ops_lead", state={})
-runner_hitl = Runner(agent=agente_ops, app_name=\"agente_ops_app\", session_service=session_service)
+session_hitl = await session_service.create_session(app_name="agente_ops_app", session_id="sesion_03_hitl", user_id="ops_lead", state={})
+runner_hitl = Runner(agent=agente_ops, app_name="agente_ops_app", session_service=session_service)
 
 peticion = "Por favor reinicia el servicio postgresql de forma forzada."
 print(f"👤 [Usuario]: {peticion}\\n")
@@ -319,8 +350,8 @@ print(f"👤 [Usuario]: {peticion}\\n")
 async for event in runner_hitl.run_async(session_id=session_hitl.id, user_id="ops_lead", prompt=peticion):
     if hasattr(event, "actions") and event.actions:
         print(f"🛡️ [Intercepción de Seguridad]: EventAction emitido -> {event.actions}")
-    if event.content:
-        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+    text = extraer_texto(event)
+    if text:
         print(f"🤖 [Agente]:\\n{text}")
 """))
 
@@ -378,8 +409,8 @@ pipeline_secuencial = SequentialAgent(
     sub_agents=[analizador, arquitecto_db, disenador_api]
 )
 
-session_seq = await session_service.create_session(session_id="sesion_seq", user_id="lead", state={})
-runner_seq = Runner(agent=pipeline_secuencial, app_name=\"pipeline_secuencial_app\", session_service=session_service)
+session_seq = await session_service.create_session(app_name="pipeline_secuencial_app", session_id="sesion_seq", user_id="lead", state={})
+runner_seq = Runner(agent=pipeline_secuencial, app_name="pipeline_secuencial_app", session_service=session_service)
 
 input_proyecto = "Queremos un sistema para reservas de bicicletas compartidas con pago por minuto."
 print(f"📋 [Caso]: {input_proyecto}\\n")
@@ -387,8 +418,8 @@ print(f"📋 [Caso]: {input_proyecto}\\n")
 async for event in runner_seq.run_async(session_id=session_seq.id, user_id="lead", prompt=input_proyecto):
     if event.author:
         print(f"👉 [Turno de: {event.author}]")
-    if event.content:
-        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+    text = extraer_texto(event)
+    if text:
         print(text[:250] + ("..." if len(text) > 250 else "") + "\\n")
 """))
 
@@ -433,8 +464,8 @@ pipeline_hibrido = SequentialAgent(
     ]
 )
 
-session_par = await session_service.create_session(session_id="sesion_par", user_id="dev", state={})
-runner_par = Runner(agent=pipeline_hibrido, app_name=\"pipeline_hibrido_app\", session_service=session_service)
+session_par = await session_service.create_session(app_name="pipeline_hibrido_app", session_id="sesion_par", user_id="dev", state={})
+runner_par = Runner(agent=pipeline_hibrido, app_name="pipeline_hibrido_app", session_service=session_service)
 
 codigo_test = \"\"\"
 @app.route('/login', methods=['POST'])
@@ -448,8 +479,8 @@ print("⚡ [Iniciando análisis concurrente de seguridad y rendimiento...]\\n")
 async for event in runner_par.run_async(session_id=session_par.id, user_id="dev", prompt=codigo_test):
     if event.author:
         print(f">> [Evento de: {event.author}]")
-    if event.content:
-        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+    text = extraer_texto(event)
+    if text:
         print(text[:250] + ("..." if len(text) > 250 else "") + "\\n")
 """))
 
@@ -483,10 +514,10 @@ generador = Agent(
     name="coder",
     model=local_model,
     instruction=\"\"\"
-    Optimiza esta función Python:
+    Optimiza esta función Python en pocas líneas con memoización y type hints:
     {codigo_actual}
     Feedback previo: {eval_calidad}
-    Escribe sólo el código Python mejorado con types hints.
+    Escribe sólo la función Python concisa.
     \"\"\",
     output_key="codigo_actual"
 )
@@ -496,19 +527,20 @@ evaluador = Agent(
     model=local_model,
     instruction=\"\"\"
     Evalúa el código: {codigo_actual}
-    Si tiene type hints y complejidad O(n) o mejor, responde 'APROBADO' en la 1ra línea y explica.
-    De lo contrario responde 'RECHAZADO' y explica qué falta.
+    Si contiene type hints o memoización, responde exactamente 'APROBADO' en la 1ra línea.
+    De lo contrario responde 'RECHAZADO' en 1 línea.
     \"\"\",
     output_key="eval_calidad"
 )
 
 bucle = LoopAgent(
     name="bucle_calidad",
-    sub_agents=[generador, evaluador, EscalationChecker("stop_checker")],
-    max_iterations=3  # Parada de seguridad
+    sub_agents=[generador, evaluador, EscalationChecker(name="stop_checker")],
+    max_iterations=2  # Parada de seguridad
 )
 
 session_loop = await session_service.create_session(
+    app_name="bucle_app",
     session_id="sesion_loop",
     user_id="dev",
     state={
@@ -517,14 +549,14 @@ session_loop = await session_service.create_session(
         "num_iter": 0
     }
 )
-runner_loop = Runner(agent=bucle, app_name=\"bucle_app\", session_service=session_service)
+runner_loop = Runner(agent=bucle, app_name="bucle_app", session_service=session_service)
 
 print("🔄 [Iniciando Bucle de Refinamiento Iterativo...]\\n")
 async for event in runner_loop.run_async(session_id=session_loop.id, user_id="dev", prompt="Optimiza Fibonacci"):
     if event.author and event.author != "stop_checker":
         print(f"[{event.author}]:")
-        if event.content:
-            text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+        text = extraer_texto(event)
+        if text:
             print(text[:200] + "...\\n")
 """))
 
@@ -576,11 +608,12 @@ grafo_simple = Workflow(
 )
 
 session_graph = await session_service.create_session(
+    app_name="grafo_simple_app",
     session_id="sesion_g1",
     user_id="analista",
     state={"rol_usuario": "DevOps Senior L3"}
 )
-runner_graph = Runner(agent=grafo_simple, app_name=\"grafo_simple_app\", session_service=session_service)
+runner_graph = Runner(agent=grafo_simple, app_name="grafo_simple_app", session_service=session_service)
 
 ticket = "CrashLoopBackOff en pod auth-service tras rotar secrets."
 print(f"🎫 [Ticket]: {ticket}\\n")
@@ -588,14 +621,14 @@ print(f"🎫 [Ticket]: {ticket}\\n")
 async for event in runner_graph.run_async(session_id=session_graph.id, user_id="analista", prompt=ticket):
     if event.author:
         print(f">> [Nodo Activo: {event.author}]")
-    if event.content:
-        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+    text = extraer_texto(event)
+    if text:
         print(text[:300] + "...\\n")
 """))
 
     cells.append(make_cell("markdown", """### 6.2 Enrutamiento Condicional Dinámico en Grafos
 El nodo clasificador emite un `Event(output=..., route="nombre_ruta")`.
-Las aristas dirigen la ejecución al agente correspondiente según la ruta elegida."""))
+Las aristas dirigen la ejecución al agente correspondiente usando un mapeo `{ruta: agente}`."""))
 
     cells.append(make_cell("code", """from google.adk.events.event import Event
 
@@ -615,14 +648,16 @@ grafo_dinamico = Workflow(
     name="router_workflow",
     edges=[
         ("START", enrutador),
-        (enrutador, agente_code, "codigo"),
-        (enrutador, agente_sec, "seguridad"),
-        (enrutador, agente_gen, "__DEFAULT__")
+        (enrutador, {
+            "codigo": agente_code,
+            "seguridad": agente_sec,
+            "__DEFAULT__": agente_gen
+        })
     ]
 )
 
-session_router = await session_service.create_session(session_id="sesion_router", user_id="dev", state={})
-runner_router = Runner(agent=grafo_dinamico, app_name=\"grafo_dinamico_app\", session_service=session_service)
+session_router = await session_service.create_session(app_name="grafo_dinamico_app", session_id="sesion_router", user_id="dev", state={})
+runner_router = Runner(agent=grafo_dinamico, app_name="grafo_dinamico_app", session_service=session_service)
 
 test_prompt = "Detectamos una vulnerabilidad de inyección SQL con fuga de tokens de sesión."
 print(f"🚨 [Consulta]: {test_prompt}\\n")
@@ -630,8 +665,8 @@ print(f"🚨 [Consulta]: {test_prompt}\\n")
 async for event in runner_router.run_async(session_id=session_router.id, user_id="dev", prompt=test_prompt):
     if event.author:
         print(f"🎯 [Rama Activada: {event.author}]")
-    if event.content:
-        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+    text = extraer_texto(event)
+    if text:
         print(text[:300] + "...\\n")
 """))
 
@@ -652,7 +687,7 @@ sincronizador = JoinNode(name="merge_analisis")
 decisor_cto = Agent(
     name="cto_infra",
     model=local_model,
-    instruction="Recibes un diccionario con costos y latencia agregados por el JoinNode: {node_input}. Emite una conclusión de viabilidad técnica."
+    instruction="Recibes un diccionario con costos y latencia agregados por el JoinNode. Emite una conclusión de viabilidad técnica concisa."
 )
 
 grafo_join = Workflow(
@@ -664,8 +699,8 @@ grafo_join = Workflow(
     ]
 )
 
-session_join = await session_service.create_session(session_id="sesion_join", user_id="cto", state={})
-runner_join = Runner(agent=grafo_join, app_name=\"grafo_join_app\", session_service=session_service)
+session_join = await session_service.create_session(app_name="grafo_join_app", session_id="sesion_join", user_id="cto", state={})
+runner_join = Runner(agent=grafo_join, app_name="grafo_join_app", session_service=session_service)
 
 req_infra = "Despliegue de un microservicio de pagos con 2,000 transacciones concurrentes por minuto."
 print(f"🏗️ [Requerimiento de Infraestructura]: {req_infra}\\n")
@@ -673,8 +708,8 @@ print(f"🏗️ [Requerimiento de Infraestructura]: {req_infra}\\n")
 async for event in runner_join.run_async(session_id=session_join.id, user_id="cto", prompt=req_infra):
     if event.author:
         print(f">> [Evento de: {event.author}]")
-    if event.content:
-        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+    text = extraer_texto(event)
+    if text:
         print(text[:350] + "...\\n")
 """))
 
@@ -706,8 +741,8 @@ coordinador = Agent(
     tools=[AgentTool(especialista_cripto)]
 )
 
-session_at = await session_service.create_session(session_id="sesion_agent_tool", user_id="dev", state={})
-runner_at = Runner(agent=coordinador, app_name=\"coordinador_app\", session_service=session_service)
+session_at = await session_service.create_session(app_name="coordinador_app", session_id="sesion_agent_tool", user_id="dev", state={})
+runner_at = Runner(agent=coordinador, app_name="coordinador_app", session_service=session_service)
 
 pregunta_cripto = "Queremos almacenar contraseñas en MySQL usando MD5 con salt. ¿Es buena idea?"
 print(f"👤 [Usuario]: {pregunta_cripto}\\n")
@@ -715,8 +750,8 @@ print(f"👤 [Usuario]: {pregunta_cripto}\\n")
 async for event in runner_at.run_async(session_id=session_at.id, user_id="dev", prompt=pregunta_cripto):
     if event.author:
         print(f">> [Evento de: {event.author}]")
-    if event.content:
-        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+    text = extraer_texto(event)
+    if text:
         print(text[:300] + "...\\n")
 """))
 
@@ -759,8 +794,8 @@ coordinador_release = Agent(
     sub_agents=[subagente_auditor]  # Inyecta 'request_task_auditor_task'
 )
 
-session_task = await session_service.create_session(session_id="sesion_task_mode", user_id="lead", state={})
-runner_task = Runner(agent=coordinador_release, app_name=\"coordinador_release_app\", session_service=session_service)
+session_task = await session_service.create_session(app_name="coordinador_release_app", session_id="sesion_task_mode", user_id="lead", state={})
+runner_task = Runner(agent=coordinador_release, app_name="coordinador_release_app", session_service=session_service)
 
 propuesta = "Lanzamiento de API de facturación: Se guarda el token de pago en logs en texto claro para depuración."
 print(f"📦 [Propuesta de Release]: {propuesta}\\n")
@@ -768,8 +803,8 @@ print(f"📦 [Propuesta de Release]: {propuesta}\\n")
 async for event in runner_task.run_async(session_id=session_task.id, user_id="lead", prompt=propuesta):
     if event.author:
         print(f">> [Evento de: {event.author}]")
-    if event.content:
-        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+    text = extraer_texto(event)
+    if text:
         print(text[:300] + "...\\n")
 """))
 
@@ -851,11 +886,12 @@ agencia = SequentialAgent(
 )
 
 session_capstone = await session_service.create_session(
+    app_name="agencia_app",
     session_id="sesion_capstone",
     user_id="founder",
     state={"scores_calidad": {}}
 )
-runner_capstone = Runner(agent=agencia, app_name=\"agencia_app\", session_service=session_service)
+runner_capstone = Runner(agent=agencia, app_name="agencia_app", session_service=session_service)
 
 caso_telemedicina = \"\"\"
 Plataforma de telemedicina con videollamadas encriptadas de extremo a extremo,
@@ -866,8 +902,8 @@ print("🏢 [INICIANDO EJECUCIÓN DE LA AGENCIA MULTI-AGENTE CAPSTONE]\\n")
 async for event in runner_capstone.run_async(session_id=session_capstone.id, user_id="founder", prompt=caso_telemedicina):
     if event.author:
         print(f"⭐ [FASE: {event.author.upper()}]")
-    if event.content:
-        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+    text = extraer_texto(event)
+    if text:
         print(text[:300] + "...\\n")
 
 sesion_final = await session_service.get_session(session_id=session_capstone.id, user_id="founder")
