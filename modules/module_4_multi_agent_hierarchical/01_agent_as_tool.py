@@ -61,7 +61,7 @@ async def main():
     session_id = "sesion_agent_tool_01"
     user_id = "dev_lead"
     
-    session = await session_service.create_session(session_id=session_id, user_id=user_id, state={})
+    session = await session_service.create_session(app_name="default_app", session_id=session_id, user_id=user_id, state={})
 
     consulta = "Para guardar contraseñas de usuarios en nuestra base de datos, planeamos usar MD5 con un salt estático. ¿Qué opinas?"
     print(f"[Usuario]: {consulta}\n")

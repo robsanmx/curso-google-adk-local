@@ -75,7 +75,7 @@ async def main():
     session_id = "sesion_hitl_03"
     user_id = "security_officer"
     
-    session = await session_service.create_session(
+    session = await session_service.create_session(app_name="default_app", 
         session_id=session_id,
         user_id=user_id,
         state={"perfil": "operador"}

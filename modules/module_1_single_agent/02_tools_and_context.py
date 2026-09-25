@@ -103,7 +103,7 @@ async def main():
     session_id = "sesion_herramientas_02"
     user_id = "ops_admin"
     
-    session = await session_service.create_session(
+    session = await session_service.create_session(app_name="default_app", 
         session_id=session_id,
         user_id=user_id,
         state={
@@ -124,7 +124,7 @@ async def main():
             print(f"[Respuesta]:\n{text}")
 
     # Verificar qué guardó ToolContext en la sesión
-    updated_session = await session_service.get_session(session_id=session.id, user_id=user_id)
+    updated_session = await session_service.get_session(app_name="default_app", session_id=session.id, user_id=user_id)
     print("\n" + "=" * 50)
     print(f"[*] Alertas guardadas en session.state por ToolContext:")
     print(f"    {updated_session.state.get('alertas_registradas')}")

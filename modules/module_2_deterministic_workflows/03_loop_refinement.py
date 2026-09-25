@@ -105,7 +105,7 @@ async def main():
     session_id = "sesion_loop_03"
     user_id = "ingeniero"
     
-    session = await session_service.create_session(
+    session = await session_service.create_session(app_name="default_app", 
         session_id=session_id,
         user_id=user_id,
         state={
@@ -123,7 +123,7 @@ async def main():
                 text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
                 print(text[:250] + ("..." if len(text) > 250 else ""))
 
-    final_session = await session_service.get_session(session_id=session.id, user_id=user_id)
+    final_session = await session_service.get_session(app_name="default_app", session_id=session.id, user_id=user_id)
     print("\n" + "=" * 60)
     print(f"[*] Loop finalizado tras {final_session.state.get('iteracion_bucle')} iteraciones.")
     print("[*] Código final obtenido:")

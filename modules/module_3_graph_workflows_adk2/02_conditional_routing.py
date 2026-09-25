@@ -83,7 +83,7 @@ async def main():
     for sid, prompt in casos:
         print("\n" + "=" * 65)
         print(f"[*] EJECUTANDO PROMPT: '{prompt}'")
-        session = await session_service.create_session(session_id=sid, user_id="dev", state={})
+        session = await session_service.create_session(app_name="default_app", session_id=sid, user_id="dev", state={})
         
         async for event in runner.run_async(session_id=session.id, user_id="dev", new_message=types.Content(role="user", parts=[types.Part.from_text(text=prompt)])):
             if event.author:

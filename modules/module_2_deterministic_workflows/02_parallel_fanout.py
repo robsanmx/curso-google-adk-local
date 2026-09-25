@@ -96,7 +96,7 @@ async def main():
     session_id = "sesion_parallel_02"
     user_id = "tech_lead"
     
-    session = await session_service.create_session(session_id=session_id, user_id=user_id, state={})
+    session = await session_service.create_session(app_name="default_app", session_id=session_id, user_id=user_id, state={})
 
     codigo_muestra = """
     @app.route('/login', methods=['POST'])
@@ -122,7 +122,7 @@ async def main():
             print(text[:300] + ("..." if len(text) > 300 else ""))
 
     # Verificar el estado acumulado
-    final_session = await session_service.get_session(session_id=session.id, user_id=user_id)
+    final_session = await session_service.get_session(app_name="default_app", session_id=session.id, user_id=user_id)
     print("\n" + "=" * 60)
     print("[*] Claves generadas concurrentemente en session.state:")
     for k in ["reporte_seguridad", "reporte_rendimiento", "reporte_mantenibilidad", "dictamen_final"]:

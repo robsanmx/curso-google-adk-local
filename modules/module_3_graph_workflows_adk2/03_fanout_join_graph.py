@@ -81,7 +81,7 @@ async def main():
     session_id = "sesion_join_03"
     user_id = "infra_manager"
     
-    session = await session_service.create_session(session_id=session_id, user_id=user_id, state={})
+    session = await session_service.create_session(app_name="default_app", session_id=session_id, user_id=user_id, state={})
 
     solicitud = "Despliegue de un microservicio de scoring crediticio con picos de 5,000 req/sec en Latinoamérica."
     print(f"[Proyecto a evaluar]:\n{solicitud}\n")

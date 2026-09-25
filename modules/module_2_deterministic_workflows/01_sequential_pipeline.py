@@ -84,7 +84,7 @@ async def main():
     session_id = "sesion_seq_01"
     user_id = "product_owner"
     
-    session = await session_service.create_session(
+    session = await session_service.create_session(app_name="default_app", 
         session_id=session_id,
         user_id=user_id,
         state={}
@@ -102,7 +102,7 @@ async def main():
             print(text[:400] + ("..." if len(text) > 400 else ""))
 
     # 6. Inspeccionar el estado final acumulado
-    final_session = await session_service.get_session(session_id=session.id, user_id=user_id)
+    final_session = await session_service.get_session(app_name="default_app", session_id=session.id, user_id=user_id)
     print("\n" + "=" * 60)
     print("[*] Resumen de Claves generadas en session.state:")
     for k in ["analisis_tecnico", "esquema_sql", "especificacion_api"]:

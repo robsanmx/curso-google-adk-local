@@ -158,7 +158,7 @@ async def main():
     session_id = "capstone_agency_run_01"
     user_id = "founder_roberto"
     
-    session = await session_service.create_session(
+    session = await session_service.create_session(app_name="default_app", 
         session_id=session_id,
         user_id=user_id,
         state={
@@ -188,7 +188,7 @@ async def main():
             print(text[:450] + ("\n... [Contenido completo guardado en estado]" if len(text) > 450 else ""))
 
     # Resumen final de la sesión
-    sesion_final = await session_service.get_session(session_id=session.id, user_id=user_id)
+    sesion_final = await session_service.get_session(app_name="default_app", session_id=session.id, user_id=user_id)
     print("\n" + "=" * 70)
     print(" RESUMEN DE EJECUCIÓN DE LA AGENCIA Y ESTADO CONSOLIDADO")
     print("=" * 70)

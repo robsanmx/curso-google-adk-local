@@ -75,7 +75,7 @@ async def main():
     session_id = "sesion_task_delegation_02"
     user_id = "devops_lead"
     
-    session = await session_service.create_session(session_id=session_id, user_id=user_id, state={})
+    session = await session_service.create_session(app_name="default_app", session_id=session_id, user_id=user_id, state={})
 
     propuesta_despliegue = """
     Proponemos desplegar el servicio de pagos v2.

@@ -50,7 +50,7 @@ async def main():
     session_id = "sesion_demo_01"
     user_id = "dev_roberto"
     
-    session = await session_service.create_session(
+    session = await session_service.create_session(app_name="default_app", 
         session_id=session_id,
         user_id=user_id,
         state={
@@ -75,7 +75,7 @@ async def main():
             print(f"{event.content.parts[0].text if hasattr(event.content, 'parts') else event.content}")
 
     # 6. Inspeccionar el estado actualizado de la sesión
-    updated_session = await session_service.get_session(session_id=session.id, user_id=user_id)
+    updated_session = await session_service.get_session(app_name="default_app", session_id=session.id, user_id=user_id)
     print("\n" + "-" * 50)
     print("[*] Estado de la sesión tras la ejecución:")
     print(f"    output_key ('last_response'): {updated_session.state.get('last_response')[:120]}...")
