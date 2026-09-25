@@ -239,6 +239,49 @@ print("✓ Clave guardada en session.state['respuesta_asistente']:")
 print(str(sesion_actualizada.state.get("respuesta_asistente") or "")[:150] + "...")
 """))
 
+    cells.append(make_cell("markdown", """### 2.1 Ejecución Interactiva del Agente con `adk web` (`single_state_agent`)
+
+Para interactuar con este agente desde la interfaz gráfica web oficial de ADK:
+
+```
+agents/single_state_agent/
+├── __init__.py     # Exporta root_agent
+└── agent.py        # Asistente de desarrollo con inyección de contexto y modelo local
+```
+
+#### 🚀 Comando para lanzar este agente en tu terminal:
+
+```bash
+adk web agents/single_state_agent --port 8000
+```
+*(O desde el entorno virtual: `.venv/bin/adk web agents/single_state_agent --port 8000`)*
+
+Luego abre en tu navegador: **[http://localhost:8000](http://localhost:8000)**
+
+**Prueba sugerida en el chat de la Web UI:**
+> *"¿Cómo configuro una conexión a PostgreSQL con SQLAlchemy usando variables de entorno y buenas prácticas?"*
+
+*(Observa cómo el agente responde con formato Markdown completo, bloques de código syntax-highlighted y persistencia de memoria).*"""))
+
+    cells.append(make_cell("code", """from pathlib import Path
+from google.adk.cli.utils.agent_loader import AgentLoader
+
+# 1. Verificar la estructura del paquete standalone
+ruta_agente = Path("agents/single_state_agent/agent.py")
+print(f"📄 Ruta del agente standalone: {ruta_agente.resolve()}")
+print(f"   Tamaño: {ruta_agente.stat().st_size} bytes\\n")
+
+# 2. Cargar el agente usando el cargador oficial de ADK
+loader = AgentLoader("agents")
+agente = loader.load_agent("single_state_agent")
+
+print(f"✓ Agente descubierto por ADK Web: {agente.name}")
+print(f"✓ Clase: {type(agente).__name__}")
+print(f"✓ Descripción: {getattr(agente, 'description', '')}")
+print("\\n💡 Recuerda: ejecuta en tu terminal para probar la UI:")
+print("   adk web agents/single_state_agent --port 8000")
+"""))
+
     # -------------------------------------------------------------
     # SECCIÓN 3: TOOLS Y TOOLCONTEXT
     # -------------------------------------------------------------
@@ -315,6 +358,49 @@ async for event in runner_tools.run_async(session_id=session_tools.id, user_id="
     text = extraer_texto(event)
     if text:
         print(f"{text}\\n")
+"""))
+
+    cells.append(make_cell("markdown", """### 3.1 Ejecución Interactiva del Agente con Herramientas en `adk web` (`devops_tools_agent`)
+
+Para interactuar con un agente que ejecuta herramientas reales y ver las tarjetas de llamadas de función en la UI web:
+
+```
+agents/devops_tools_agent/
+├── __init__.py     # Exporta root_agent
+└── agent.py        # Agente con tools: consultar_estado_pod y obtener_metricas_servidor
+```
+
+#### 🚀 Comando para lanzar este agente en tu terminal:
+
+```bash
+adk web agents/devops_tools_agent --port 8000
+```
+*(O desde el entorno virtual: `.venv/bin/adk web agents/devops_tools_agent --port 8000`)*
+
+Luego abre en tu navegador: **[http://localhost:8000](http://localhost:8000)**
+
+**Prueba sugerida en el chat de la Web UI:**
+> *"Revisa el estado del pod auth-service y las métricas de cpu del servidor prod-db-01"*
+
+*(Observa cómo ADK Web renderiza automáticamente las tarjetas de invocación de tools y sus resultados antes de que el agente formule su respuesta final).*"""))
+
+    cells.append(make_cell("code", """from pathlib import Path
+from google.adk.cli.utils.agent_loader import AgentLoader
+
+# 1. Verificar la estructura del paquete standalone
+ruta_agente = Path("agents/devops_tools_agent/agent.py")
+print(f"📄 Ruta del agente standalone: {ruta_agente.resolve()}")
+print(f"   Tamaño: {ruta_agente.stat().st_size} bytes\\n")
+
+# 2. Cargar el agente usando el cargador oficial de ADK
+loader = AgentLoader("agents")
+agente = loader.load_agent("devops_tools_agent")
+
+print(f"✓ Agente descubierto por ADK Web: {agente.name}")
+print(f"✓ Herramientas disponibles en la UI: {[getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agente.tools]}")
+print(f"✓ Descripción: {getattr(agente, 'description', '')}")
+print("\\n💡 Recuerda: ejecuta en tu terminal para probar la UI:")
+print("   adk web agents/devops_tools_agent --port 8000")
 """))
 
     # -------------------------------------------------------------
@@ -487,6 +573,49 @@ async for event in runner_seq.run_async(session_id=session_seq.id, user_id="lead
         print(text[:250] + ("..." if len(text) > 250 else "") + "\\n")
 """))
 
+    cells.append(make_cell("markdown", """### 5.1.1 Ejecución Interactiva del Pipeline Secuencial en `adk web` (`sequential_agent`)
+
+Para ver cómo la interfaz gráfica de ADK representa un pipeline determinista de agentes encadenados:
+
+```
+agents/sequential_agent/
+├── __init__.py     # Exporta root_agent
+└── agent.py        # SequentialAgent con subagentes: agente_linter y agente_refactor
+```
+
+#### 🚀 Comando para lanzar este pipeline en tu terminal:
+
+```bash
+adk web agents/sequential_agent --port 8000
+```
+*(O desde el entorno virtual: `.venv/bin/adk web agents/sequential_agent --port 8000`)*
+
+Luego abre en tu navegador: **[http://localhost:8000](http://localhost:8000)**
+
+**Prueba sugerida en el chat de la Web UI:**
+> *"Analiza y refactoriza esta función: def calc(x): return x*2 if x>0 else 0"*
+
+*(En la Web UI, haz clic en la pestaña **Graph** para ver el diagrama de flujo secuencial y observa en el chat cómo primero responde el linter y después el refactorizador).*"""))
+
+    cells.append(make_cell("code", """from pathlib import Path
+from google.adk.cli.utils.agent_loader import AgentLoader
+
+# 1. Verificar la estructura del paquete standalone
+ruta_agente = Path("agents/sequential_agent/agent.py")
+print(f"📄 Ruta del pipeline standalone: {ruta_agente.resolve()}")
+print(f"   Tamaño: {ruta_agente.stat().st_size} bytes\\n")
+
+# 2. Cargar el pipeline usando el cargador oficial de ADK
+loader = AgentLoader("agents")
+agente = loader.load_agent("sequential_agent")
+
+print(f"✓ Pipeline descubierto por ADK Web: {agente.name}")
+print(f"✓ Subagentes encadenados: {[s.name for s in agente.sub_agents]}")
+print(f"✓ Descripción: {getattr(agente, 'description', '')}")
+print("\\n💡 Recuerda: ejecuta en tu terminal para probar la UI:")
+print("   adk web agents/sequential_agent --port 8000")
+"""))
+
     cells.append(make_cell("markdown", """### 5.2 `ParallelAgent` Concurrente y Agregación
 Ejecutamos en paralelo una auditoría de **Seguridad**, una de **Rendimiento** y una de **Mantenibilidad**.
 Posteriormente, un agente sintetizador consolidará los 3 reportes."""))
@@ -546,6 +675,49 @@ async for event in runner_par.run_async(session_id=session_par.id, user_id="dev"
     text = extraer_texto(event)
     if text:
         print(text[:250] + ("..." if len(text) > 250 else "") + "\\n")
+"""))
+
+    cells.append(make_cell("markdown", """### 5.2.1 Ejecución Interactiva de la Auditoría Concurrente en `adk web` (`parallel_agent`)
+
+Para ver la ejecución simultánea de múltiples auditores especializados en la interfaz web:
+
+```
+agents/parallel_agent/
+├── __init__.py     # Exporta root_agent
+└── agent.py        # ParallelAgent (OWASP + Infra + Licencias) + Agregador CISO
+```
+
+#### 🚀 Comando para lanzar este agente en tu terminal:
+
+```bash
+adk web agents/parallel_agent --port 8000
+```
+*(O desde el entorno virtual: `.venv/bin/adk web agents/parallel_agent --port 8000`)*
+
+Luego abre en tu navegador: **[http://localhost:8000](http://localhost:8000)**
+
+**Prueba sugerida en el chat de la Web UI:**
+> *"Audita un microservicio de pagos con Node.js y un Dockerfile que corre como root con dependencias GPL"*
+
+*(Haz clic en la pestaña **Graph** de la Web UI para visualizar la bifurcación paralela y el nodo de síntesis del CISO).*"""))
+
+    cells.append(make_cell("code", """from pathlib import Path
+from google.adk.cli.utils.agent_loader import AgentLoader
+
+# 1. Verificar la estructura del paquete standalone
+ruta_agente = Path("agents/parallel_agent/agent.py")
+print(f"📄 Ruta del agente standalone: {ruta_agente.resolve()}")
+print(f"   Tamaño: {ruta_agente.stat().st_size} bytes\\n")
+
+# 2. Cargar el agente usando el cargador oficial de ADK
+loader = AgentLoader("agents")
+agente = loader.load_agent("parallel_agent")
+
+print(f"✓ Agente descubierto por ADK Web: {agente.name}")
+print(f"✓ Estructura de subagentes: {[s.name for s in agente.sub_agents]}")
+print(f"✓ Descripción: {getattr(agente, 'description', '')}")
+print("\\n💡 Recuerda: ejecuta en tu terminal para probar la UI:")
+print("   adk web agents/parallel_agent --port 8000")
 """))
 
     cells.append(make_cell("markdown", """### 5.3 `LoopAgent` de Refinamiento con `EscalationChecker`
@@ -622,6 +794,50 @@ async for event in runner_loop.run_async(session_id=session_loop.id, user_id="de
         text = extraer_texto(event)
         if text:
             print(text[:200] + "...\\n")
+"""))
+
+    cells.append(make_cell("markdown", """### 5.3.1 Ejecución Interactiva del Bucle de Optimización en `adk web` (`loop_agent`)
+
+Para ver en vivo cómo el bucle iterativo evalúa y optimiza código hasta que el evaluador aprueba la solución:
+
+```
+agents/loop_agent/
+├── __init__.py     # Exporta root_agent
+└── agent.py        # LoopAgent con generador, evaluador y EscalationChecker
+```
+
+#### 🚀 Comando para lanzar este bucle en tu terminal:
+
+```bash
+adk web agents/loop_agent --port 8000
+```
+*(O desde el entorno virtual: `.venv/bin/adk web agents/loop_agent --port 8000`)*
+
+Luego abre en tu navegador: **[http://localhost:8000](http://localhost:8000)**
+
+**Prueba sugerida en el chat de la Web UI:**
+> *"Optimiza la función de fibonacci recursiva para que tenga complejidad O(n) y type hints"*
+
+*(Observa en el chat de ADK Web los ciclos de refinamiento y cómo el EscalationChecker detiene el bucle automáticamente).*"""))
+
+    cells.append(make_cell("code", """from pathlib import Path
+from google.adk.cli.utils.agent_loader import AgentLoader
+
+# 1. Verificar la estructura del paquete standalone
+ruta_agente = Path("agents/loop_agent/agent.py")
+print(f"📄 Ruta del bucle standalone: {ruta_agente.resolve()}")
+print(f"   Tamaño: {ruta_agente.stat().st_size} bytes\\n")
+
+# 2. Cargar el agente usando el cargador oficial de ADK
+loader = AgentLoader("agents")
+agente = loader.load_agent("loop_agent")
+
+print(f"✓ Bucle descubierto por ADK Web: {agente.name}")
+print(f"✓ Subagentes del bucle: {[s.name for s in agente.sub_agents]}")
+print(f"✓ Máximo de iteraciones: {agente.max_iterations}")
+print(f"✓ Descripción: {getattr(agente, 'description', '')}")
+print("\\n💡 Recuerda: ejecuta en tu terminal para probar la UI:")
+print("   adk web agents/loop_agent --port 8000")
 """))
 
     # -------------------------------------------------------------
@@ -777,6 +993,50 @@ async for event in runner_join.run_async(session_id=session_join.id, user_id="ct
         print(text[:350] + "...\\n")
 """))
 
+    cells.append(make_cell("markdown", """### 6.4 Ejecución Interactiva del Graph Workflow en `adk web` (`graph_workflow_agent`)
+
+ADK 2.0 permite desplegar workflows de grafos dirigidos completos directamente en la Web UI:
+
+```
+agents/graph_workflow_agent/
+├── __init__.py     # Exporta root_agent
+└── agent.py        # Workflow con START, enrutador condicional y agentes especialistas
+```
+
+#### 🚀 Comando para lanzar este grafo en tu terminal:
+
+```bash
+adk web agents/graph_workflow_agent --port 8000
+```
+*(O desde el entorno virtual: `.venv/bin/adk web agents/graph_workflow_agent --port 8000`)*
+
+Luego abre en tu navegador: **[http://localhost:8000](http://localhost:8000)**
+
+**Pruebas sugeridas para verificar el enrutamiento:**
+1. **Ruta de Seguridad:** *"Detectamos una vulnerabilidad de fuga de secrets y SQL injection en el login"* $\\rightarrow$ Enrutado al especialista de seguridad.
+2. **Ruta de Bugs/Código:** *"Traceback con NullPointerException en el microservicio de auth"* $\\rightarrow$ Enrutado al especialista de bugs.
+
+*(En la Web UI, ve a la pestaña **Graph** para explorar el grafo interactivo con sus aristas condicionales y nodos).*"""))
+
+    cells.append(make_cell("code", """from pathlib import Path
+from google.adk.cli.utils.agent_loader import AgentLoader
+
+# 1. Verificar la estructura del paquete standalone
+ruta_agente = Path("agents/graph_workflow_agent/agent.py")
+print(f"📄 Ruta del workflow standalone: {ruta_agente.resolve()}")
+print(f"   Tamaño: {ruta_agente.stat().st_size} bytes\\n")
+
+# 2. Cargar el workflow usando el cargador oficial de ADK
+loader = AgentLoader("agents")
+agente = loader.load_agent("graph_workflow_agent")
+
+print(f"✓ Workflow descubierto por ADK Web: {agente.name}")
+print(f"✓ Tipo de nodo raíz: {type(agente).__name__}")
+print(f"✓ Aristas configuradas: {len(getattr(agente, 'edges', []))}")
+print("\\n💡 Recuerda: ejecuta en tu terminal para probar la UI:")
+print("   adk web agents/graph_workflow_agent --port 8000")
+"""))
+
     # -------------------------------------------------------------
     # SECCIÓN 7: MULTI-AGENT AVANZADO
     # -------------------------------------------------------------
@@ -817,6 +1077,49 @@ async for event in runner_at.run_async(session_id=session_at.id, user_id="dev", 
     text = extraer_texto(event)
     if text:
         print(text[:300] + "...\\n")
+"""))
+
+    cells.append(make_cell("markdown", """### 7.1.1 Ejecución Interactiva del Patrón AgentTool en `adk web` (`agent_tool_orchestrator`)
+
+Para ver cómo un orquestador interactúa con un subagente encapsulado como herramienta:
+
+```
+agents/agent_tool_orchestrator/
+├── __init__.py     # Exporta root_agent
+└── agent.py        # Tech Lead con AgentTool(especialista_owasp)
+```
+
+#### 🚀 Comando para lanzar este orquestador en tu terminal:
+
+```bash
+adk web agents/agent_tool_orchestrator --port 8000
+```
+*(O desde el entorno virtual: `.venv/bin/adk web agents/agent_tool_orchestrator --port 8000`)*
+
+Luego abre en tu navegador: **[http://localhost:8000](http://localhost:8000)**
+
+**Prueba sugerida en el chat de la Web UI:**
+> *"Tech Lead, por favor audita la seguridad de nuestro nuevo servicio de pagos y pasarela Stripe"*
+
+*(Observa cómo la herramienta invocada despliega en la interfaz la ejecución del subagente especialista y el Tech Lead resume los hallazgos).*"""))
+
+    cells.append(make_cell("code", """from pathlib import Path
+from google.adk.cli.utils.agent_loader import AgentLoader
+
+# 1. Verificar la estructura del paquete standalone
+ruta_agente = Path("agents/agent_tool_orchestrator/agent.py")
+print(f"📄 Ruta del orquestador standalone: {ruta_agente.resolve()}")
+print(f"   Tamaño: {ruta_agente.stat().st_size} bytes\\n")
+
+# 2. Cargar el orquestador usando el cargador oficial de ADK
+loader = AgentLoader("agents")
+agente = loader.load_agent("agent_tool_orchestrator")
+
+print(f"✓ Orquestador descubierto por ADK Web: {agente.name}")
+print(f"✓ Herramientas AgentTool: {[getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agente.tools]}")
+print(f"✓ Descripción: {getattr(agente, 'description', '')}")
+print("\\n💡 Recuerda: ejecuta en tu terminal para probar la UI:")
+print("   adk web agents/agent_tool_orchestrator --port 8000")
 """))
 
     cells.append(make_cell("markdown", """### 7.2 ADK 2.0 Task Delegation con Esquemas Pydantic (`mode="task"`)
@@ -882,6 +1185,49 @@ async for event in runner_task.run_async(session_id=session_task.id, user_id="le
     text = extraer_texto(event)
     if text:
         print(text[:300] + "...\\n")
+"""))
+
+    cells.append(make_cell("markdown", """### 7.2.1 Ejecución Interactiva de Task Delegation en `adk web` (`task_delegation_agent`)
+
+Para ver cómo el Release Manager delega tareas formales validadas con esquemas Pydantic:
+
+```
+agents/task_delegation_agent/
+├── __init__.py     # Exporta root_agent
+└── agent.py        # Release Manager con subagente en mode="task" y ReporteAuditoria
+```
+
+#### 🚀 Comando para lanzar este agente en tu terminal:
+
+```bash
+adk web agents/task_delegation_agent --port 8000
+```
+*(O desde el entorno virtual: `.venv/bin/adk web agents/task_delegation_agent --port 8000`)*
+
+Luego abre en tu navegador: **[http://localhost:8000](http://localhost:8000)**
+
+**Prueba sugerida en el chat de la Web UI:**
+> *"Release Manager: Solicitamos pase a producción del endpoint de facturación con tokens en logs"*
+
+*(Observa cómo el coordinador delega mediante 'request_task_auditor_task', el subagente responde con el modelo estructurado, y el pase es bloqueado de forma justificada).*"""))
+
+    cells.append(make_cell("code", """from pathlib import Path
+from google.adk.cli.utils.agent_loader import AgentLoader
+
+# 1. Verificar la estructura del paquete standalone
+ruta_agente = Path("agents/task_delegation_agent/agent.py")
+print(f"📄 Ruta del agente standalone: {ruta_agente.resolve()}")
+print(f"   Tamaño: {ruta_agente.stat().st_size} bytes\\n")
+
+# 2. Cargar el agente usando el cargador oficial de ADK
+loader = AgentLoader("agents")
+agente = loader.load_agent("task_delegation_agent")
+
+print(f"✓ Release Manager descubierto por ADK Web: {agente.name}")
+print(f"✓ Subagentes en Task Mode: {[s.name for s in agente.sub_agents]}")
+print(f"✓ Descripción: {getattr(agente, 'description', '')}")
+print("\\n💡 Recuerda: ejecuta en tu terminal para probar la UI:")
+print("   adk web agents/task_delegation_agent --port 8000")
 """))
 
     # -------------------------------------------------------------
@@ -988,6 +1334,49 @@ print("📊 [RESUMEN FINAL CONSOLIDADO EN ESTADO]:")
 print("• Scores registrados por las tools:", sesion_final.state.get("scores_calidad"))
 print("• Clave 'blueprint_final' presente:", "blueprint_final" in sesion_final.state)
 print("=" * 60)
+"""))
+
+    cells.append(make_cell("markdown", """### 8.1 Ejecución Interactiva de la Agencia Capstone en `adk web` (`capstone_agency`)
+
+La consultora de arquitectura completa puede ejecutarse en ADK Web para interactuar con todos sus roles y ver su topología gráfica:
+
+```
+agents/capstone_agency/
+├── __init__.py     # Exporta root_agent
+└── agent.py        # Pipeline híbrido: PM -> Auditoría Concurrente (Datos + Seguridad) -> Blueprint CTO
+```
+
+#### 🚀 Comando para lanzar la agencia completa en tu terminal:
+
+```bash
+adk web agents/capstone_agency --port 8000
+```
+*(O desde el entorno virtual: `.venv/bin/adk web agents/capstone_agency --port 8000`)*
+
+Luego abre en tu navegador: **[http://localhost:8000](http://localhost:8000)**
+
+**Prueba sugerida en el chat de la Web UI:**
+> *"Diseña la arquitectura para una app de telemedicina con videollamadas cifradas E2E y cobros para 50,000 usuarios"*
+
+*(En la Web UI, explora en la pestaña **Graph** la topología completa multi-agente y observa la entrega del Blueprint arquitectónico estructurado).*"""))
+
+    cells.append(make_cell("code", """from pathlib import Path
+from google.adk.cli.utils.agent_loader import AgentLoader
+
+# 1. Verificar la estructura del paquete standalone
+ruta_agente = Path("agents/capstone_agency/agent.py")
+print(f"📄 Ruta de la agencia standalone: {ruta_agente.resolve()}")
+print(f"   Tamaño: {ruta_agente.stat().st_size} bytes\\n")
+
+# 2. Cargar la agencia usando el cargador oficial de ADK
+loader = AgentLoader("agents")
+agente = loader.load_agent("capstone_agency")
+
+print(f"✓ Agencia Capstone descubierta por ADK Web: {agente.name}")
+print(f"✓ Pipeline principal: {[s.name for s in agente.sub_agents]}")
+print(f"✓ Descripción: {getattr(agente, 'description', '')}")
+print("\\n💡 Recuerda: ejecuta en tu terminal para probar la UI:")
+print("   adk web agents/capstone_agency --port 8000")
 """))
 
     # -------------------------------------------------------------
