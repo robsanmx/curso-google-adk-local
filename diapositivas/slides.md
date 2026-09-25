@@ -26,15 +26,16 @@ color: #f8fafc
 
 ---
 
-## 🏛️ ¿Qué es Google ADK 2.0?
+## 🏛️ ¿Qué es Google ADK? (Agent Development Kit)
 
-- **Agent Development Kit (ADK):** Framework de código abierto y código primero (*code-first*) de Google para construir agentes de producción.
-- **Agents-CLI (`google/agents-cli`):** Cadena de herramientas (*toolchain*) para todo el ciclo de desarrollo agéntico (**ADLC**):
-  - *Scaffolding* estructurado.
-  - *Evaluaciones* automatizadas con datasets y LLM-as-a-judge.
-  - *Observabilidad* con OpenTelemetry y trazas unificadas.
-  - *Despliegue* estandarizado.
-- **Novedad en ADK 2.0:** Soporte nativo de **Grafos Dirigidos de Agentes (`Workflow`)** y **Delegación Tipada de Tareas (`mode="task"`)**.
+Framework de ingeniería de software de Google diseñado para construir sistemas agénticos robustos, modulares y de producción:
+
+1. **Filosofía Code-First & Tipado Estricto:** Clases Python nativas con Pydantic y typing. Sin abstracciones opacas ni prompts ocultos; lo que ves en el código es lo que se ejecuta.
+2. **100% Agnóstico de Modelo (Local & Cloud):** Funciona con Gemini, pero optimizado para correr **100% en local** con **Ollama, LM Studio, MLX y vLLM** vía LiteLLM. Cero coste por token y máxima privacidad de datos.
+3. **Orquestación Determinista y Grafos:** Mezcla razonamiento probabilístico con control de flujo determinista (`SequentialAgent`, `ParallelAgent`, `LoopAgent` y el nuevo **Graph Workflow API** con `JoinNode`).
+4. **Ecosistema Completo: ADK Web & Agents-CLI:** UI interactiva local (`adk web agents`), soporte nativo de Human-in-the-Loop interactivo, visor de topología y ciclo de vida de ingeniería (ADLC).
+
+> 💡 **Regla de Oro:** *No delegues a la improvisación de un LLM lo que tu lógica de negocio ya conoce de antemano.*
 
 ---
 
@@ -134,6 +135,7 @@ herramienta_segura = FunctionTool(
 )
 ```
 - El `Runner` detecta la solicitud y pausa el ciclo esperando la aprobación del usuario.
+- En **ADK Web UI** (`adk web agents`), el usuario recibe una tarjeta interactiva con botones para **Aprobar** o **Rechazar** la ejecución de la herramienta en tiempo real.
 
 ---
 

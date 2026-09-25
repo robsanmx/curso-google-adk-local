@@ -81,7 +81,7 @@
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">INTRODUCCIÓN</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 1 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 1 de 17</span>
           </div>
           <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Google ADK 2.0 y Arquitecturas Multi-Agente</h2>
           <p class="text-sm md:text-base text-slate-400">De un solo agente con Function Calling a orquestaciones complejas y grafos ejecutados 100% en local.</p>
@@ -109,12 +109,78 @@
         </div>
       </section>
 
-      <!-- SLIDE 2: PRIMITIVAS DE ADK 2.0 -->
+      <!-- SLIDE 2: INTRODUCCIÓN A GOOGLE ADK -->
+      <section class="slide hidden flex-col" data-title="¿Qué es Google ADK?" data-tag="FUNDAMENTOS">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">FUNDAMENTOS</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 2 de 17</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">¿Qué es Google ADK? (Agent Development Kit)</h2>
+          <p class="text-sm text-slate-400">El framework de ingeniería de software de Google diseñado para construir sistemas agénticos robustos, modulares y de producción.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+          <!-- CARD 1: CODE FIRST -->
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/40 transition">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center text-sm font-bold">1</span>
+              <h3 class="font-bold text-slate-200 text-sm">Filosofía Code-First & Tipado Estricto</h3>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Sin abstracciones opacas ni cadenas mágicas de texto. Los agentes, herramientas y estados son clases Python nativas con tipado estricto (Pydantic, typing). Lo que ves en el código es exactamente lo que se ejecuta.
+            </p>
+          </div>
+
+          <!-- CARD 2: AGNOSTICO -->
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm font-bold">2</span>
+              <h3 class="font-bold text-slate-200 text-sm">100% Agnóstico de Modelo (Local & Cloud)</h3>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Diseñado para operar con Gemini, pero optimizado para correr <strong>100% en local</strong> con <strong>Ollama, LM Studio, MLX o vLLM</strong> vía LiteLLM. Cero costo por token y máxima privacidad para datos corporativos sensibles.
+            </p>
+          </div>
+
+          <!-- CARD 3: ORQUESTACION -->
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-purple-500/40 transition">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center text-sm font-bold">3</span>
+              <h3 class="font-bold text-slate-200 text-sm">Orquestación Determinista y Grafos</h3>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Combina la flexibilidad cognitiva del LLM con control de flujo determinista: agentes Secuenciales, Paralelos, Bucles iterativos (<code class="text-purple-300">LoopAgent</code>) y el nuevo <strong>Graph Workflow API (ADK 2.0)</strong> con aristas dinámicas y <code class="text-purple-300">JoinNode</code>.
+            </p>
+          </div>
+
+          <!-- CARD 4: ADK WEB -->
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-amber-500/40 transition">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center text-sm font-bold">4</span>
+              <h3 class="font-bold text-slate-200 text-sm">Ecosistema Completo: ADK Web & Agents-CLI</h3>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Incluye un servidor de desarrollo interactivo con UI gráfica (<strong><code class="text-amber-300">adk web</code></strong>), soporte nativo de Human-in-the-Loop con tarjetas de aprobación interactiva, visor de topología de grafos y suites de evaluación automatizadas (ADLC).
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-4 p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <div class="flex items-center gap-2">
+            <span class="text-emerald-400 font-bold">✓ Regla de Oro:</span>
+            <span>No delegues a la improvisación de un LLM lo que tu lógica de negocio ya conoce de antemano.</span>
+          </div>
+          <span class="font-mono text-[11px] text-blue-400">pip install google-adk</span>
+        </div>
+      </section>
+
+      <!-- SLIDE 3: PRIMITIVAS DE ADK 2.0 -->
       <section class="slide hidden flex-col" data-title="Primitivas de ADK 2.0" data-tag="MÓDULO 1: ARQUITECTURA">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 1: ARQUITECTURA</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 2 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 3 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Las Primitivas Esenciales de ADK 2.0</h2>
           <p class="text-sm text-slate-400">Desacoplamiento riguroso entre Cognición, Capacidad, Estado y Ejecución.</p>
@@ -170,12 +236,12 @@ token = session.state.get(<span class="text-emerald-300">"auth_token"</span>)</c
         </div>
       </section>
 
-      <!-- SLIDE 3: RUNTIME LOCAL -->
+      <!-- SLIDE 4: RUNTIME LOCAL -->
       <section class="slide hidden flex-col" data-title="Runtime Local (Ollama/LM Studio/MLX)" data-tag="MÓDULO 1: ENTORNO">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 1: ENTORNO</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 3 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 4 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Configuración Local con Ollama, LM Studio y MLX</h2>
           <p class="text-sm text-slate-400">Conectando Google ADK 2.0 con servidores locales mediante el adaptador LiteLLM.</p>
@@ -232,12 +298,12 @@ modelo_mlx = LiteLlm(
         </div>
       </section>
 
-      <!-- SLIDE 4: SINGLE AGENT -->
+      <!-- SLIDE 5: SINGLE AGENT -->
       <section class="slide hidden flex-col" data-title="Single-Agent y Estado Dinámico" data-tag="MÓDULO 1: SINGLE AGENT">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 1: SINGLE AGENT</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 4 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 5 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Single-Agent: Inyección Dinámica y Persistencia</h2>
           <p class="text-sm text-slate-400">Uso de placeholders en instrucciones y guardado automático con output_key.</p>
@@ -279,12 +345,12 @@ agente = Agent(
         </div>
       </section>
 
-      <!-- SLIDE 5: HERRAMIENTAS Y TOOLCONTEXT -->
+      <!-- SLIDE 6: HERRAMIENTAS Y TOOLCONTEXT -->
       <section class="slide hidden flex-col" data-title="Herramientas y ToolContext" data-tag="MÓDULO 1: HERRAMIENTAS">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 1: HERRAMIENTAS</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 5 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 6 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Function Calling Estricto y ToolContext</h2>
           <p class="text-sm text-slate-400">Acceso y mutación del estado conversacional desde dentro de las herramientas.</p>
@@ -335,12 +401,12 @@ agente = Agent(
         </div>
       </section>
 
-      <!-- SLIDE 6: HUMAN IN THE LOOP -->
+      <!-- SLIDE 7: HUMAN IN THE LOOP -->
       <section class="slide hidden flex-col" data-title="Human-in-the-Loop y Seguridad" data-tag="MÓDULO 1: SEGURIDAD">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 1: SEGURIDAD</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 6 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 7 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Human-in-the-Loop: Puertas de Confirmación</h2>
           <p class="text-sm text-slate-400">Garantizando que acciones destructivas o críticas requieran autorización explícita.</p>
@@ -383,12 +449,12 @@ tool_reinicio = FunctionTool(
         </div>
       </section>
 
-      <!-- SLIDE 7: SEQUENTIAL AGENT -->
+      <!-- SLIDE 8: SEQUENTIAL AGENT -->
       <section class="slide hidden flex-col" data-title="SequentialAgent Pipeline" data-tag="MÓDULO 2: ORQUESTACIÓN">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 2: ORQUESTACIÓN</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 7 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 8 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Orquestación Determinista: SequentialAgent</h2>
           <p class="text-sm text-slate-400">Canalizaciones lineales predecibles y de bajo coste computacional.</p>
@@ -423,12 +489,12 @@ pipeline = SequentialAgent(
         </div>
       </section>
 
-      <!-- SLIDE 8: PARALLEL AGENT -->
+      <!-- SLIDE 9: PARALLEL AGENT -->
       <section class="slide hidden flex-col" data-title="ParallelAgent Concurrency" data-tag="MÓDULO 2: ORQUESTACIÓN">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 2: ORQUESTACIÓN</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 8 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 9 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Concurrencia Local con ParallelAgent</h2>
           <p class="text-sm text-slate-400">Multi-procesamiento simultáneo y prevención de condiciones de carrera.</p>
@@ -468,12 +534,12 @@ pipeline = SequentialAgent(
         </div>
       </section>
 
-      <!-- SLIDE 9: LOOP AGENT -->
+      <!-- SLIDE 10: LOOP AGENT -->
       <section class="slide hidden flex-col" data-title="LoopAgent y EscalationChecker" data-tag="MÓDULO 2: ORQUESTACIÓN">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 2: ORQUESTACIÓN</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 9 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 10 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Bucles de Refinamiento: LoopAgent & Escalation</h2>
           <p class="text-sm text-slate-400">Ciclos iterativos de Generación -> Evaluación -> Parada Temprana.</p>
@@ -521,12 +587,12 @@ loop = LoopAgent(
         </div>
       </section>
 
-      <!-- SLIDE 10: GRAPH WORKFLOWS ADK 2.0 -->
+      <!-- SLIDE 11: GRAPH WORKFLOWS ADK 2.0 -->
       <section class="slide hidden flex-col" data-title="Graph Workflow API de ADK 2.0" data-tag="MÓDULO 3: GRAFOS">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 3: GRAFOS</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 10 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 11 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">La Revolución de ADK 2.0: Graph Workflow API</h2>
           <p class="text-sm text-slate-400">Grafos Dirigidos de Nodos y Aristas para flujos dinámicos e interactivos.</p>
@@ -568,12 +634,12 @@ grafo = Workflow(
         </div>
       </section>
 
-      <!-- SLIDE 11: GRAPH CONDITIONAL ROUTING -->
+      <!-- SLIDE 12: GRAPH CONDITIONAL ROUTING -->
       <section class="slide hidden flex-col" data-title="Enrutamiento Condicional en Grafos" data-tag="MÓDULO 3: GRAFOS">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 3: GRAFOS</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 11 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 12 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Enrutamiento Condicional en Grafos</h2>
           <p class="text-sm text-slate-400">Bifurcaciones por condición y rutas por defecto (__DEFAULT__).</p>
@@ -616,12 +682,12 @@ grafo = Workflow(
         </div>
       </section>
 
-      <!-- SLIDE 12: FAN-OUT & JOINNODE -->
+      <!-- SLIDE 13: FAN-OUT & JOINNODE -->
       <section class="slide hidden flex-col" data-title="Fan-Out & Fan-In con JoinNode" data-tag="MÓDULO 3: GRAFOS">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 3: GRAFOS</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 12 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 13 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Fan-Out y Fan-In con JoinNode</h2>
           <p class="text-sm text-slate-400">Bifurcación hacia ramas concurrentes y convergencia estructurada.</p>
@@ -662,12 +728,12 @@ grafo = Workflow(
         </div>
       </section>
 
-      <!-- SLIDE 13: AGENT AS A TOOL -->
+      <!-- SLIDE 14: AGENT AS A TOOL -->
       <section class="slide hidden flex-col" data-title="Patrón AgentTool" data-tag="MÓDULO 4: MULTI-AGENT">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 4: MULTI-AGENT</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 13 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 14 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Agente como Herramienta: Patrón AgentTool</h2>
           <p class="text-sm text-slate-400">Invocación especializada sin perder la titularidad de la conversación.</p>
@@ -709,12 +775,12 @@ coordinador = Agent(
         </div>
       </section>
 
-      <!-- SLIDE 14: TASK DELEGATION CON PYDANTIC -->
+      <!-- SLIDE 15: TASK DELEGATION CON PYDANTIC -->
       <section class="slide hidden flex-col" data-title="Task Delegation con Pydantic" data-tag="MÓDULO 4: MULTI-AGENT">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 4: MULTI-AGENT</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 14 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 15 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Task Delegation Tipada con Pydantic (ADK 2.0)</h2>
           <p class="text-sm text-slate-400">Contratos de datos estrictos mediante mode='task', request_task y finish_task.</p>
@@ -752,12 +818,12 @@ coordinador = Agent(
         </div>
       </section>
 
-      <!-- SLIDE 15: PROYECTO CAPSTONE -->
+      <!-- SLIDE 16: PROYECTO CAPSTONE -->
       <section class="slide hidden flex-col" data-title="Proyecto Capstone" data-tag="PROYECTO FINAL">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">PROYECTO FINAL</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 15 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 16 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Proyecto Capstone: Local Software Architect Agency</h2>
           <p class="text-sm text-slate-400">Un equipo multi-agente completo en ejecución local.</p>
@@ -795,12 +861,12 @@ coordinador = Agent(
         </div>
       </section>
 
-      <!-- SLIDE 16: MEJORES PRÁCTICAS Y CIERRE -->
+      <!-- SLIDE 17: MEJORES PRÁCTICAS Y CIERRE -->
       <section class="slide hidden flex-col" data-title="Mejores Prácticas de Ingeniería" data-tag="PRODUCCIÓN">
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">PRODUCCIÓN</span>
-            <span class="text-xs text-slate-500 font-mono">Diapositiva 16 de 16</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 17 de 17</span>
           </div>
           <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Mejores Prácticas de Ingeniería (ADLC)</h2>
           <p class="text-sm text-slate-400">Directrices de producción basadas en google/agents-cli.</p>
