@@ -1044,6 +1044,116 @@ print("\\n🚀 Para ejecutarlos todos a la vez en la interfaz web:")
 print("   adk web agents --port 8000")
 """))
 
+    cells.append(make_cell("markdown", """### 9.2 Batería de Pruebas Oficial para ADK Web
+
+A continuación se define la **batería oficial de pruebas** para cada uno de los 10 agentes del curso. Cada caso de prueba está calibrado para activar las características clave de cada arquitectura (Tools, Human-in-the-Loop, paralelismo, enrutamiento condicional, Task Mode y blueprints de arquitectura).
+
+Puedes copiar estos prompts directamente en el chat de **ADK Web UI** (`http://localhost:8000`) o probarlos de inmediato en este notebook mediante la función `probar_agente()`:"""))
+
+    cells.append(make_cell("code", """bateria_pruebas = [
+    {
+        "id": 1,
+        "agente": "single_state_agent",
+        "modulo": "Módulo 1: Single-Agent & Estado",
+        "prompt": "¿Cómo configuro una conexión a PostgreSQL con SQLAlchemy usando variables de entorno?",
+        "esperado": "Asistencia técnica personalizada con buenas prácticas y bloques de código."
+    },
+    {
+        "id": 2,
+        "agente": "devops_tools_agent",
+        "modulo": "Módulo 1: Tools & ToolContext",
+        "prompt": "Revisa el estado del pod auth-service y las métricas de cpu del servidor prod-db-01.",
+        "esperado": "Llamadas a 'consultar_estado_pod' y 'obtener_metricas_servidor' con diagnóstico estructurado."
+    },
+    {
+        "id": 3,
+        "agente": "hitl_agent",
+        "modulo": "Módulo 1: Human-in-the-Loop",
+        "prompt": "Por favor reinicia el servicio postgresql de forma forzada.",
+        "esperado": "Interrupción de seguridad y modal interactivo de aprobación (Approve / Reject) en ADK Web."
+    },
+    {
+        "id": 4,
+        "agente": "sequential_agent",
+        "modulo": "Módulo 2: Sequential Pipeline",
+        "prompt": "Analiza y refactoriza esta función: def calc(x): return x*2 if x>0 else 0",
+        "esperado": "Paso 1: informe_lint del linter -> Paso 2: código refactorizado con type hints."
+    },
+    {
+        "id": 5,
+        "agente": "parallel_agent",
+        "modulo": "Módulo 2: Parallel Concurrent",
+        "prompt": "Audita un microservicio de pagos con Node.js y un Dockerfile que corre como root con dependencias GPL.",
+        "esperado": "Auditoría simultánea (OWASP, Infraestructura, Licencias) y síntesis ejecutiva del CISO."
+    },
+    {
+        "id": 6,
+        "agente": "loop_agent",
+        "modulo": "Módulo 2: Loop & Escalation",
+        "prompt": "Optimiza la función de fibonacci recursiva para que tenga complejidad O(n) y type hints.",
+        "esperado": "Bucle iterativo generador-evaluador con parada temprana cuando EscalationChecker aprueba."
+    },
+    {
+        "id": 7,
+        "agente": "graph_workflow_agent",
+        "modulo": "Módulo 3: Graph Workflow API",
+        "prompt": "Detectamos una vulnerabilidad de fuga de secrets y SQL injection en el login.",
+        "esperado": "START -> Enrutador condicional dinámico derivando al especialista en ciberseguridad."
+    },
+    {
+        "id": 8,
+        "agente": "agent_tool_orchestrator",
+        "modulo": "Módulo 4: AgentTool Pattern",
+        "prompt": "Tech Lead, por favor audita la seguridad de nuestro nuevo servicio de pagos.",
+        "esperado": "El Tech Lead invoca a especialista_owasp como herramienta inteligente mediante AgentTool."
+    },
+    {
+        "id": 9,
+        "agente": "task_delegation_agent",
+        "modulo": "Módulo 4: Task Mode & Pydantic",
+        "prompt": "Release Manager: Solicitamos pase a producción del endpoint de facturación con tokens en logs.",
+        "esperado": "Delegación formal con 'request_task' y validación fuertemente tipada con Pydantic."
+    },
+    {
+        "id": 10,
+        "agente": "capstone_agency",
+        "modulo": "Proyecto Capstone: Agencia Completa",
+        "prompt": "Diseña la arquitectura para una app de telemedicina con videollamadas cifradas E2E y cobros para 50,000 usuarios.",
+        "esperado": "Pipeline híbrido completo: PM -> Auditoría Concurrente (Datos + CISO) -> Blueprint del CTO."
+    }
+]
+
+print("=" * 80)
+print("🧪 BATERÍA OFICIAL DE PRUEBAS PARA ADK WEB (http://localhost:8000)")
+print("=" * 80)
+for p in bateria_pruebas:
+    print(f"\\n[{p['id']}] Agente: {p['agente']} ({p['modulo']})")
+    print(f"    💬 Prompt: '{p['prompt']}'")
+    print(f"    🎯 Esperado: {p['esperado']}")
+
+# Función auxiliar para probar cualquier agente de la batería directamente en este notebook
+async def probar_agente(nombre_agente: str, prompt: str):
+    agente_obj = loader.load_agent(nombre_agente)
+    sess_service = InMemorySessionService()
+    sess = await sess_service.create_session(app_name=nombre_agente, session_id="test_sess", user_id="tester", state={})
+    runner = Runner(agent=agente_obj, app_name=nombre_agente, session_service=sess_service)
+    
+    print(f"\\n--- Ejecutando prueba de '{nombre_agente}' en local ---")
+    print(f"💬 Prompt: '{prompt}'\\n")
+    async for event in runner.run_async(session_id=sess.id, user_id="tester", prompt=prompt):
+        if event.author:
+            print(f">> [Evento de: {event.author}]")
+        txt = extraer_texto(event)
+        if txt:
+            print(f"{txt}\\n")
+
+# Ejecutamos una prueba en vivo como demostración inmediata:
+print("\\n" + "=" * 80)
+print("▶️ EJECUTANDO PRUEBA DEMOSTRATIVA EN VIVO CON 'devops_tools_agent':")
+print("=" * 80)
+await probar_agente("devops_tools_agent", bateria_pruebas[1]["prompt"])
+"""))
+
     cells.append(make_cell("markdown", """---
 **¡Felicitaciones! Has dominado Google ADK 2.0 y la construcción de sistemas multi-agente en local.**
 """))
