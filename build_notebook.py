@@ -1,0 +1,928 @@
+"""
+Script para generar el Jupyter Notebook completo del Curso Google ADK 2.0.
+Crea el archivo curso_adk2_completo.ipynb con todas las explicaciones y ejemplos ejecutables.
+"""
+
+import json
+
+def make_cell(cell_type, source, execution_count=None):
+    if isinstance(source, str):
+        lines = [line + "\n" for line in source.split("\n")]
+        # Eliminar el último salto de línea innecesario
+        if lines and lines[-1] == "\n":
+            lines[-1] = ""
+    else:
+        lines = source
+
+    cell = {
+        "cell_type": cell_type,
+        "metadata": {},
+    }
+    if cell_type == "code":
+        cell["execution_count"] = execution_count
+        cell["outputs"] = []
+        cell["source"] = lines
+    elif cell_type == "markdown":
+        cell["source"] = lines
+    return cell
+
+def build_notebook():
+    cells = []
+
+    # -------------------------------------------------------------
+    # PORTADA Y PRESENTACIÓN
+    # -------------------------------------------------------------
+    cells.append(make_cell("markdown", """# 🚀 Curso Google ADK 2.0: De Single-Agent a Arquitecturas Multi-Agente
+### Guía Interactiva Paso a Paso con Ejecución 100% Local (Ollama, LM Studio o MLX)
+**Basado en las mejores prácticas de Google Agents-CLI y el Agent Development Lifecycle (ADLC)**
+
+---
+
+### 🎯 Contenido del Notebook:
+1. **Configuración del Runtime Local:** Conexión con Ollama, LM Studio y MLX mediante `LiteLlm`.
+2. **Módulo 1 - Single Agent:** Anatomía de `Agent`, inyección dinámica de estado `{state_key}` y persistencia con `output_key`.
+3. **Módulo 1 - Herramientas y ToolContext:** Function Calling riguroso y manipulación directa de `session.state`.
+4. **Módulo 1 - Human-in-the-Loop:** Puertas de confirmación de seguridad con `FunctionTool(require_confirmation=...)`.
+5. **Módulo 2 - Orquestación Determinista:**
+   - 5.1 `SequentialAgent` (Pipelines lineales y paso de datos).
+   - 5.2 `ParallelAgent` (Concurrencia local y aislamiento de `output_key`).
+   - 5.3 `LoopAgent` (Bucles de refinamiento y parada temprana con `EscalationChecker`).
+6. **Módulo 3 - ADK 2.0 Graph Workflow API:**
+   - 6.1 Fundamentos de Grafos: `Workflow`, nodo `START` y auto-wrapping de nodos.
+   - 6.2 Enrutamiento Condicional Dinámico (`Event(route=...)` y fallback `__DEFAULT__`).
+   - 6.3 Concurrencia con Fan-Out y Fan-In (`JoinNode`).
+7. **Módulo 4 - Multi-Agente Jerárquico Avanzado:**
+   - 7.1 Patrón `AgentTool` (Invocación sin cesión de la conversación).
+   - 7.2 Delegación Tipada con Pydantic (`mode="task"`, `request_task` y `finish_task`).
+8. **Proyecto Capstone:** Agencia Local de Arquitectura de Software y Auditoría de Seguridad.
+"""))
+
+    # -------------------------------------------------------------
+    # INSTALACIÓN Y REQUISITOS
+    # -------------------------------------------------------------
+    cells.append(make_cell("markdown", """## 0. Instalación de Dependencias y Preparación
+Ejecuta la siguiente celda para asegurarte de tener las librerías necesarias instaladas.
+Habilitamos `nest_asyncio` para poder ejecutar llamadas asíncronas (`asyncio.run` / `run_async`) fluidamente dentro de celdas de Jupyter."""))
+
+    cells.append(make_cell("code", """# Instalación de dependencias (descomenta si no las has instalado previamente)
+# !pip install -q google-adk>=2.0.0 litellm>=1.40.0 pydantic>=2.7.0 python-dotenv nest-asyncio psutil
+
+import nest_asyncio
+nest_asyncio.apply()
+
+print("✓ nest_asyncio configurado correctamente para Jupyter Notebook.")
+"""))
+
+    # -------------------------------------------------------------
+    # SECCIÓN 1: CONFIGURACIÓN LOCAL
+    # -------------------------------------------------------------
+    cells.append(make_cell("markdown", """## 1. Conexión con Modelos Locales (Ollama, LM Studio y MLX)
+Google ADK utiliza el adaptador `google.adk.models.lite_llm.LiteLlm` para conectarse a cualquier servidor local compatible:
+* **Ollama:** Por defecto en `http://localhost:11434` (Prefijo: `ollama_chat/<modelo>`).
+* **LM Studio:** Servidor local OpenAI-compatible en `http://localhost:1234/v1`.
+* **MLX (Apple Silicon):** `mlx-lm.server` o LocalAI en `http://localhost:8080/v1`.
+
+> 💡 **Modelos recomendados para agentes locales:** `qwen2.5:7b-instruct` (o 14B) y `llama3.1:8b-instruct`. Cuentan con un excelente seguimiento de instrucciones y formateo estricto para Function Calling."""))
+
+    cells.append(make_cell("code", """import os
+from google.adk.models.lite_llm import LiteLlm
+
+def get_local_model(provider="ollama", model_name=None, temperature=0.2):
+    \"\"\"Instancia el modelo local configurado para Google ADK 2.0.\"\"\"
+    provider = provider.lower()
+    
+    if provider == "ollama":
+        target = model_name or "qwen2.5:7b-instruct"
+        model_str = f"ollama_chat/{target}" if not target.startswith("ollama_chat/") else target
+        return LiteLlm(
+            model=model_str,
+            api_base=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+            temperature=temperature
+        )
+    elif provider == "lmstudio":
+        target = model_name or "qwen2.5-7b-instruct"
+        model_str = f"openai/{target}" if not target.startswith("openai/") else target
+        return LiteLlm(
+            model=model_str,
+            api_base=os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1"),
+            api_key="not-needed",
+            temperature=temperature
+        )
+    elif provider == "mlx":
+        target = model_name or "mlx-community/Qwen2.5-7B-Instruct-4bit"
+        model_str = f"openai/{target}" if not target.startswith("openai/") else target
+        return LiteLlm(
+            model=model_str,
+            api_base=os.getenv("MLX_BASE_URL", "http://localhost:8080/v1"),
+            api_key="not-needed",
+            temperature=temperature
+        )
+    else:
+        raise ValueError(f"Proveedor '{provider}' no soportado.")
+
+# Inicializamos el modelo para todo el notebook (puedes cambiar 'ollama' por 'lmstudio' o 'mlx')
+local_model = get_local_model(provider="ollama", model_name="qwen2.5:7b-instruct")
+print(f"✓ Modelo local configurado: {local_model.model} en {local_model.api_base}")
+"""))
+
+    # -------------------------------------------------------------
+    # SECCIÓN 2: SINGLE AGENT
+    # -------------------------------------------------------------
+    cells.append(make_cell("markdown", """## 2. Módulo 1: Single-Agent con Inyección Dinámica de Estado
+En Google ADK, un agente se define mediante `Agent` (alias de `LlmAgent`):
+1. **`instruction`:** Soporta placeholders como `{rol}` o `{usuario}` que ADK sustituye automáticamente desde `session.state`.
+2. **`output_key`:** Guarda la respuesta final del agente directamente en `session.state[output_key]`.
+3. **`InMemorySessionService` y `Runner`:** Gestionan el almacenamiento de memoria y el despacho de eventos asíncronos."""))
+
+    cells.append(make_cell("code", """import asyncio
+from google.adk.agents import Agent
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+
+# 1. Definición del Agente con plantilla dinámica
+asistente_dev = Agent(
+    name="senior_dev_assistant",
+    model=local_model,
+    instruction=\"\"\"
+    Eres un {rol_tecnico}.
+    Estás asesorando a {nombre_usuario}.
+    
+    Reglas de respuesta:
+    - Responde de forma técnica y concisa.
+    - Cita siempre consideraciones de seguridad y arquitectura.
+    \"\"\",
+    output_key="respuesta_asistente"  # Persistencia automática en el estado
+)
+
+# 2. Configurar la sesión y el Runner
+session_service = InMemorySessionService()
+runner = Runner(agent=asistente_dev, session_service=session_service)
+
+# 3. Crear sesión con variables de estado iniciales
+session = await session_service.create_session(
+    session_id="sesion_01_single",
+    user_id="roberto",
+    state={
+        "rol_tecnico": "Arquitecto Senior de Software",
+        "nombre_usuario": "Roberto"
+    }
+)
+
+# 4. Ejecutar consulta
+prompt = "¿Cuáles son las ventajas de ejecutar agentes con ADK 2.0 en local?"
+print(f"👤 [Usuario]: {prompt}\\n")
+print("🤖 [Agente]:")
+
+async for event in runner.run_async(session_id=session.id, user_id="roberto", prompt=prompt):
+    if event.content:
+        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+        print(text)
+
+# 5. Comprobar que output_key guardó el valor en session.state
+sesion_actualizada = await session_service.get_session(session_id=session.id, user_id="roberto")
+print("\\n" + "=" * 50)
+print("✓ Clave guardada en session.state['respuesta_asistente']:")
+print(sesion_actualizada.state.get("respuesta_asistente")[:150] + "...")
+"""))
+
+    # -------------------------------------------------------------
+    # SECCIÓN 3: TOOLS Y TOOLCONTEXT
+    # -------------------------------------------------------------
+    cells.append(make_cell("markdown", """## 3. Módulo 1: Herramientas (Tools) y `ToolContext`
+### Reglas de Oro de Tools en Google ADK:
+1. **Docstring obligatorio y claro:** El LLM planifica su uso leyendo exclusivamente la descripción y la sección `Args:` y `Returns:`.
+2. **Anotaciones de tipo estrictas:** No usar parámetros ambiguos o sin tipo.
+3. **Retorno en diccionario serializable (`dict`):** Siempre devolver estructuras JSON.
+4. **`ToolContext`:** Parámetro especial que ADK inyecta automáticamente. Permite leer y mutar `session.state` sin ensuciar el prompt."""))
+
+    cells.append(make_cell("code", """import platform
+import psutil
+from google.adk.tools import ToolContext
+
+def obtener_metricas_servidor() -> dict:
+    \"\"\"Obtiene métricas de hardware de la máquina local (CPU, Memoria, SO).
+
+    Returns:
+        dict con el porcentaje de uso de CPU, memoria disponible y plataforma.
+    \"\"\"
+    mem = psutil.virtual_memory()
+    return {
+        "status": "success",
+        "cpu_usage_percent": psutil.cpu_percent(interval=0.1),
+        "memoria_libre_gb": round(mem.available / (1024**3), 2),
+        "so": platform.system()
+    }
+
+def registrar_alerta_sistema(severidad: str, detalle: str, tool_context: ToolContext) -> dict:
+    \"\"\"Registra una alerta técnica de seguridad en la sesión.
+
+    Args:
+        severidad: Nivel de la alerta ('baja', 'media', 'alta', 'critica').
+        detalle: Explicación de la vulnerabilidad o anomalía.
+
+    Returns:
+        dict con el estado de guardado y total de alertas en la sesión.
+    \"\"\"
+    # ToolContext nos permite acceder y mutar session.state directamente
+    alertas = tool_context.state.get("alertas_sistema", [])
+    alertas.append({"severidad": severidad.lower(), "detalle": detalle})
+    tool_context.state["alertas_sistema"] = alertas
+    
+    return {
+        "status": "success",
+        "mensaje": f"Alerta guardada con severidad '{severidad}'",
+        "total_alertas": len(alertas)
+    }
+
+# Creamos un agente con las herramientas integradas
+agente_monitor = Agent(
+    name="agente_monitoreo",
+    model=local_model,
+    instruction=\"\"\"
+    Eres un agente de monitoreo de servidores locales.
+    - Si el usuario te pide ver el estado del servidor, usa 'obtener_metricas_servidor'.
+    - Si detectas alguna anomalía o te piden registrar un incidente, usa 'registrar_alerta_sistema'.
+    \"\"\",
+    tools=[obtener_metricas_servidor, registrar_alerta_sistema]
+)
+
+session_tools = await session_service.create_session(
+    session_id="sesion_02_tools",
+    user_id="sysadmin",
+    state={"alertas_sistema": []}
+)
+runner_tools = Runner(agent=agente_monitor, session_service=session_service)
+
+consulta = "Consulta el estado del hardware de este equipo y dime si está operativo."
+print(f"👤 [Usuario]: {consulta}\\n")
+
+async for event in runner_tools.run_async(session_id=session_tools.id, user_id="sysadmin", prompt=consulta):
+    if hasattr(event, "actions") and event.actions:
+        print(f"⚙️ [Tool Action invocada]: {event.actions}")
+    if event.content:
+        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+        print(f"🤖 [Agente]:\\n{text}")
+"""))
+
+    # -------------------------------------------------------------
+    # SECCIÓN 4: HUMAN IN THE LOOP
+    # -------------------------------------------------------------
+    cells.append(make_cell("markdown", """## 4. Módulo 1: Human-in-the-Loop y Confirmación de Acciones Críticas
+En sistemas de producción nunca se debe permitir que un agente ejecute acciones irreversibles sin supervisión humana.
+Google ADK implementa esto mediante `FunctionTool`:
+* `require_confirmation=True` (confirmación incondicional).
+* `require_confirmation=callback_fn` (confirmación condicional basada en reglas o parámetros)."""))
+
+    cells.append(make_cell("code", """from google.adk.tools import FunctionTool
+
+def reiniciar_servicio(servicio: str, forzar: bool = False) -> dict:
+    \"\"\"Reinicia un servicio crítico de infraestructura.
+
+    Args:
+        servicio: Nombre del servicio (ej. 'nginx', 'postgresql', 'redis').
+        forzar: Si es True, fuerza la terminación inmediata.
+
+    Returns:
+        dict con el resultado de la operación.
+    \"\"\"
+    return {
+        "status": "success",
+        "mensaje": f"Servicio '{servicio}' reiniciado exitosamente (forzado={forzar})."
+    }
+
+def validar_aprobacion(servicio: str, forzar: bool = False, **kwargs) -> bool:
+    \"\"\"Regla: Exige confirmación si es una base de datos o si forzar es True.\"\"\"
+    servicios_criticos = ["postgresql", "redis", "mongodb"]
+    return (servicio.lower() in servicios_criticos) or forzar
+
+# Envolvemos la función con confirmación condicional
+tool_reinicio_seguro = FunctionTool(
+    func=reiniciar_servicio,
+    require_confirmation=validar_aprobacion
+)
+
+agente_ops = Agent(
+    name="agente_devops_seguro",
+    model=local_model,
+    instruction="Eres un operador de sistemas. Puedes reiniciar servicios cuando se solicite.",
+    tools=[tool_reinicio_seguro]
+)
+
+session_hitl = await session_service.create_session(session_id="sesion_03_hitl", user_id="ops_lead", state={})
+runner_hitl = Runner(agent=agente_ops, session_service=session_service)
+
+peticion = "Por favor reinicia el servicio postgresql de forma forzada."
+print(f"👤 [Usuario]: {peticion}\\n")
+
+async for event in runner_hitl.run_async(session_id=session_hitl.id, user_id="ops_lead", prompt=peticion):
+    if hasattr(event, "actions") and event.actions:
+        print(f"🛡️ [Intercepción de Seguridad]: EventAction emitido -> {event.actions}")
+    if event.content:
+        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+        print(f"🤖 [Agente]:\\n{text}")
+"""))
+
+    # -------------------------------------------------------------
+    # SECCIÓN 5: ORQUESTACIÓN DETERMINISTA
+    # -------------------------------------------------------------
+    cells.append(make_cell("markdown", """## 5. Módulo 2: Orquestación Determinista (`BaseAgent` Composites)
+**Regla de Oro en Arquitectura de Agentes:**
+> No delegues a la improvisación de un LLM las transiciones que tu lógica de negocio ya conoce de antemano.
+
+Google ADK ofrece 3 agentes compuestos deterministas:
+1. `SequentialAgent`: Ejecuta una lista ordenada de subagentes. Cada agente escribe en su `output_key` y el siguiente la lee en su prompt mediante `{output_key}`.
+2. `ParallelAgent`: Ejecuta múltiples subagentes concurrentemente. Cada subagente **debe** tener un `output_key` único.
+3. `LoopAgent`: Bucle iterativo de mejora continua con parada temprana mediante un `EscalationChecker` que emite `EventActions(escalate=True)`."""))
+
+    cells.append(make_cell("markdown", """### 5.1 `SequentialAgent` Pipeline
+Veamos cómo encadenar 3 especialistas:
+1. **Analizador de Requisitos** (output: `analisis_req`)
+2. **Arquitecto de Base de Datos** (lee `{analisis_req}`, output: `schema_sql`)
+3. **Diseñador de API REST** (lee `{schema_sql}`, output: `api_spec`)"""))
+
+    cells.append(make_cell("code", """from google.adk.agents import SequentialAgent
+
+analizador = Agent(
+    name="analizador",
+    model=local_model,
+    instruction="Analiza los requerimientos del usuario y extrae los 2 requisitos funcionales clave de forma muy concisa.",
+    output_key="analisis_req"
+)
+
+arquitecto_db = Agent(
+    name="arquitecto_db",
+    model=local_model,
+    instruction=\"\"\"
+    Basándote en el análisis:
+    {analisis_req}
+    Diseña el esquema de tablas SQL relacionales necesario (muy breve).
+    \"\"\",
+    output_key="schema_sql"
+)
+
+disenador_api = Agent(
+    name="disenador_api",
+    model=local_model,
+    instruction=\"\"\"
+    Basándote en el esquema de base de datos:
+    {schema_sql}
+    Diseña los 2 endpoints REST principales necesarios (Método y URI).
+    \"\"\",
+    output_key="api_spec"
+)
+
+pipeline_secuencial = SequentialAgent(
+    name="pipeline_ingenieria",
+    sub_agents=[analizador, arquitecto_db, disenador_api]
+)
+
+session_seq = await session_service.create_session(session_id="sesion_seq", user_id="lead", state={})
+runner_seq = Runner(agent=pipeline_secuencial, session_service=session_service)
+
+input_proyecto = "Queremos un sistema para reservas de bicicletas compartidas con pago por minuto."
+print(f"📋 [Caso]: {input_proyecto}\\n")
+
+async for event in runner_seq.run_async(session_id=session_seq.id, user_id="lead", prompt=input_proyecto):
+    if event.author:
+        print(f"👉 [Turno de: {event.author}]")
+    if event.content:
+        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+        print(text[:250] + ("..." if len(text) > 250 else "") + "\\n")
+"""))
+
+    cells.append(make_cell("markdown", """### 5.2 `ParallelAgent` Concurrente y Agregación
+Ejecutamos en paralelo una auditoría de **Seguridad**, una de **Rendimiento** y una de **Mantenibilidad**.
+Posteriormente, un agente sintetizador consolidará los 3 reportes."""))
+
+    cells.append(make_cell("code", """from google.adk.agents import ParallelAgent
+
+auditor_seguridad = Agent(
+    name="auditor_sec",
+    model=local_model,
+    instruction="Analiza el código y señala posibles vulnerabilidades de seguridad en 2 líneas.",
+    output_key="rep_seguridad"  # Clave única
+)
+
+optimizador_rendimiento = Agent(
+    name="optimizador_perf",
+    model=local_model,
+    instruction="Analiza el código y señala posibles cuellos de botella de rendimiento en 2 líneas.",
+    output_key="rep_rendimiento"  # Clave única
+)
+
+sintetizador = Agent(
+    name="cto_sintesis",
+    model=local_model,
+    instruction=\"\"\"
+    Has recibido dos reportes de auditoría:
+    [SEGURIDAD]: {rep_seguridad}
+    [RENDIMIENTO]: {rep_rendimiento}
+    
+    Emite una decisión ejecutiva final en 3 líneas priorizando acciones.
+    \"\"\",
+    output_key="dictamen_final"
+)
+
+pipeline_hibrido = SequentialAgent(
+    name="pipeline_auditoria_paralela",
+    sub_agents=[
+        ParallelAgent(name="auditorias_simultaneas", sub_agents=[auditor_seguridad, optimizador_rendimiento]),
+        sintetizador
+    ]
+)
+
+session_par = await session_service.create_session(session_id="sesion_par", user_id="dev", state={})
+runner_par = Runner(agent=pipeline_hibrido, session_service=session_service)
+
+codigo_test = \"\"\"
+@app.route('/login', methods=['POST'])
+def login():
+    u, p = request.form['u'], request.form['p']
+    q = f"SELECT * FROM users WHERE u = '{u}' AND p = '{p}'"
+    return db.execute(q).fetchall()
+\"\"\"
+
+print("⚡ [Iniciando análisis concurrente de seguridad y rendimiento...]\\n")
+async for event in runner_par.run_async(session_id=session_par.id, user_id="dev", prompt=codigo_test):
+    if event.author:
+        print(f">> [Evento de: {event.author}]")
+    if event.content:
+        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+        print(text[:250] + ("..." if len(text) > 250 else "") + "\\n")
+"""))
+
+    cells.append(make_cell("markdown", """### 5.3 `LoopAgent` de Refinamiento con `EscalationChecker`
+El bucle ejecuta cíclicamente:
+1. **Generador:** Escribe o mejora una función.
+2. **Evaluador:** Revisa calidad. Si está aprobada, escribe `"APROBADO"`.
+3. **EscalationChecker (`BaseAgent`):** Si ve `"APROBADO"`, emite `EventActions(escalate=True)`, lo que cancela el bucle de inmediato sin esperar a `max_iterations`."""))
+
+    cells.append(make_cell("code", """from typing import AsyncGenerator
+from google.adk.agents import BaseAgent, LoopAgent
+from google.adk.agents.invocation_context import InvocationContext
+from google.adk.events import Event, EventActions
+
+class EscalationChecker(BaseAgent):
+    \"\"\"Inspecciona el estado. Si la evaluación contiene 'APROBADO', detiene el Loop.\"\"\"
+    async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
+        evaluacion = ctx.session.state.get("eval_calidad", "")
+        iter_num = ctx.session.state.get("num_iter", 0) + 1
+        ctx.session.state["num_iter"] = iter_num
+        
+        print(f"🔍 [EscalationChecker - Iteración {iter_num}]: Comprobando nota...")
+        if "APROBADO" in evaluacion.upper():
+            print("  ✓ ¡Criterio cumplido! Emitiendo escalate=True para terminar el Loop.")
+            yield Event(author=self.name, actions=EventActions(escalate=True))
+        else:
+            print("  ✗ Calidad insuficiente. Continuando siguiente iteración.")
+            yield Event(author=self.name)
+
+generador = Agent(
+    name="coder",
+    model=local_model,
+    instruction=\"\"\"
+    Optimiza esta función Python:
+    {codigo_actual}
+    Feedback previo: {eval_calidad}
+    Escribe sólo el código Python mejorado con types hints.
+    \"\"\",
+    output_key="codigo_actual"
+)
+
+evaluador = Agent(
+    name="reviewer",
+    model=local_model,
+    instruction=\"\"\"
+    Evalúa el código: {codigo_actual}
+    Si tiene type hints y complejidad O(n) o mejor, responde 'APROBADO' en la 1ra línea y explica.
+    De lo contrario responde 'RECHAZADO' y explica qué falta.
+    \"\"\",
+    output_key="eval_calidad"
+)
+
+bucle = LoopAgent(
+    name="bucle_calidad",
+    sub_agents=[generador, evaluador, EscalationChecker("stop_checker")],
+    max_iterations=3  # Parada de seguridad
+)
+
+session_loop = await session_service.create_session(
+    session_id="sesion_loop",
+    user_id="dev",
+    state={
+        "codigo_actual": "def fib(n): return n if n<=1 else fib(n-1)+fib(n-2)",
+        "eval_calidad": "Código lento e ineficiente, sin type hints.",
+        "num_iter": 0
+    }
+)
+runner_loop = Runner(agent=bucle, session_service=session_service)
+
+print("🔄 [Iniciando Bucle de Refinamiento Iterativo...]\\n")
+async for event in runner_loop.run_async(session_id=session_loop.id, user_id="dev", prompt="Optimiza Fibonacci"):
+    if event.author and event.author != "stop_checker":
+        print(f"[{event.author}]:")
+        if event.content:
+            text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+            print(text[:200] + "...\\n")
+"""))
+
+    # -------------------------------------------------------------
+    # SECCIÓN 6: GRAPH WORKFLOWS
+    # -------------------------------------------------------------
+    cells.append(make_cell("markdown", """## 6. Módulo 3: El Nuevo Graph Workflow API de ADK 2.0
+ADK 2.0 introduce flujos basados en **Grafos Dirigidos (`Workflow`)**:
+* **`START`:** Nodo de entrada estándar que recibe la petición del usuario.
+* **Auto-Wrapping:** Cualquier función Python ordinaria o `Agent` colocado en una arista (`edge`) es convertido en nodo automáticamente.
+* **Resolución de Parámetros:**
+  - `node_input`: Salida generada por el nodo predecesor.
+  - `ctx`: Contexto del workflow.
+  - Cualquier otro nombre: Se extrae de `ctx.state[nombre]`.
+* **Aristas (`edges`):**
+  - Secuencial: `[('START', a), (a, b)]`
+  - Condicional: `[(clasificador, nodo_a, "ruta_a"), (clasificador, nodo_b, "__DEFAULT__")]`
+  - Fan-Out / Fan-In con `JoinNode`: Bifurca y sincroniza en un diccionario `{nodo_a: salida_a, nodo_b: salida_b}`."""))
+
+    cells.append(make_cell("markdown", """### 6.1 Grafo Básico con `START` y Nodos de Función"""))
+
+    cells.append(make_cell("code", """from google.adk.workflow import Workflow
+
+def preprocesar(node_input: str) -> str:
+    \"\"\"Nodo 1: Limpia y normaliza el texto recibido desde START.\"\"\"
+    return node_input.strip().upper()
+
+def enriquecer(node_input: str, rol_usuario: str) -> dict:
+    \"\"\"Nodo 2: Recibe la salida del anterior e inyecta state['rol_usuario'].\"\"\"
+    return {
+        "texto_procesado": node_input,
+        "autorizado_por": rol_usuario
+    }
+
+agente_resolutor = Agent(
+    name="resolutor_ticket",
+    model=local_model,
+    instruction="Recibes un diccionario con el ticket y el rol autorizado. Da una respuesta técnica estructurada."
+)
+
+# Definición del Grafo con sus aristas
+grafo_simple = Workflow(
+    name="workflow_tickets",
+    edges=[
+        ("START", preprocesar),
+        (preprocesar, enriquecer),
+        (enriquecer, agente_resolutor)
+    ]
+)
+
+session_graph = await session_service.create_session(
+    session_id="sesion_g1",
+    user_id="analista",
+    state={"rol_usuario": "DevOps Senior L3"}
+)
+runner_graph = Runner(agent=grafo_simple, session_service=session_service)
+
+ticket = "CrashLoopBackOff en pod auth-service tras rotar secrets."
+print(f"🎫 [Ticket]: {ticket}\\n")
+
+async for event in runner_graph.run_async(session_id=session_graph.id, user_id="analista", prompt=ticket):
+    if event.author:
+        print(f">> [Nodo Activo: {event.author}]")
+    if event.content:
+        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+        print(text[:300] + "...\\n")
+"""))
+
+    cells.append(make_cell("markdown", """### 6.2 Enrutamiento Condicional Dinámico en Grafos
+El nodo clasificador emite un `Event(output=..., route="nombre_ruta")`.
+Las aristas dirigen la ejecución al agente correspondiente según la ruta elegida."""))
+
+    cells.append(make_cell("code", """from google.adk.events.event import Event
+
+def enrutador(node_input: str) -> Event:
+    texto = node_input.lower()
+    if any(k in texto for k in ["bug", "error", "traceback", "excepcion"]):
+        return Event(output=node_input, route="codigo")
+    elif any(k in texto for k in ["seguridad", "vulnerabilidad", "cve", "token"]):
+        return Event(output=node_input, route="seguridad")
+    return Event(output=node_input, route="__DEFAULT__")
+
+agente_code = Agent(name="experto_bugs", model=local_model, instruction="Eres un debugger. Corrige el bug.")
+agente_sec = Agent(name="experto_sec", model=local_model, instruction="Eres un auditor de seguridad. Mitiga el fallo.")
+agente_gen = Agent(name="experto_general", model=local_model, instruction="Eres un arquitecto general. Brinda orientación.")
+
+grafo_dinamico = Workflow(
+    name="router_workflow",
+    edges=[
+        ("START", enrutador),
+        (enrutador, agente_code, "codigo"),
+        (enrutador, agente_sec, "seguridad"),
+        (enrutador, agente_gen, "__DEFAULT__")
+    ]
+)
+
+session_router = await session_service.create_session(session_id="sesion_router", user_id="dev", state={})
+runner_router = Runner(agent=grafo_dinamico, session_service=session_service)
+
+test_prompt = "Detectamos una vulnerabilidad de inyección SQL con fuga de tokens de sesión."
+print(f"🚨 [Consulta]: {test_prompt}\\n")
+
+async for event in runner_router.run_async(session_id=session_router.id, user_id="dev", prompt=test_prompt):
+    if event.author:
+        print(f"🎯 [Rama Activada: {event.author}]")
+    if event.content:
+        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+        print(text[:300] + "...\\n")
+"""))
+
+    cells.append(make_cell("markdown", """### 6.3 Concurrencia con Fan-Out y Fan-In (`JoinNode`)
+Bifurcamos en ramas paralelas y convergemos en `JoinNode`.
+`JoinNode` emite un diccionario con las respuestas de cada rama indexadas por el nombre del nodo."""))
+
+    cells.append(make_cell("code", """from google.adk.workflow import JoinNode
+
+def calcular_costos_infra(node_input: str) -> dict:
+    return {"costo_estimado_usd": 380.0, "servidores": "2x Standard-4 (16GB RAM)"}
+
+def auditar_latencia_red(node_input: str) -> dict:
+    return {"p95_latencia_ms": 38, "region": "us-central1", "cdn": True}
+
+sincronizador = JoinNode(name="merge_analisis")
+
+decisor_cto = Agent(
+    name="cto_infra",
+    model=local_model,
+    instruction="Recibes un diccionario con costos y latencia agregados por el JoinNode: {node_input}. Emite una conclusión de viabilidad técnica."
+)
+
+grafo_join = Workflow(
+    name="workflow_infra_join",
+    edges=[
+        ("START", (calcular_costos_infra, auditar_latencia_red)),  # Fan-Out
+        ((calcular_costos_infra, auditar_latencia_red), sincronizador),  # Fan-In convergente
+        (sincronizador, decisor_cto)
+    ]
+)
+
+session_join = await session_service.create_session(session_id="sesion_join", user_id="cto", state={})
+runner_join = Runner(agent=grafo_join, session_service=session_service)
+
+req_infra = "Despliegue de un microservicio de pagos con 2,000 transacciones concurrentes por minuto."
+print(f"🏗️ [Requerimiento de Infraestructura]: {req_infra}\\n")
+
+async for event in runner_join.run_async(session_id=session_join.id, user_id="cto", prompt=req_infra):
+    if event.author:
+        print(f">> [Evento de: {event.author}]")
+    if event.content:
+        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+        print(text[:350] + "...\\n")
+"""))
+
+    # -------------------------------------------------------------
+    # SECCIÓN 7: MULTI-AGENT AVANZADO
+    # -------------------------------------------------------------
+    cells.append(make_cell("markdown", """## 7. Módulo 4: Arquitecturas Multi-Agente Avanzadas
+### 7.1 Patrón `AgentTool` (Agente Invocado como Herramienta)
+* El agente coordinador **no cede** el diálogo al subagente.
+* El subagente opera como una función inteligente con su propio prompt y modelo.
+* El coordinador recibe la respuesta y continúa su razonamiento."""))
+
+    cells.append(make_cell("code", """from google.adk.tools import AgentTool
+
+especialista_cripto = Agent(
+    name="experto_criptografia",
+    model=local_model,
+    description="Analiza suites de cifrado, TLS, firmas y hashing.",
+    instruction="Eres un criptógrafo. Analiza los algoritmos de seguridad y señala si son obsoletos o seguros."
+)
+
+coordinador = Agent(
+    name="coordinador_arquitectura",
+    model=local_model,
+    instruction=\"\"\"
+    Eres el Arquitecto Principal. Atiendes al usuario.
+    Si pregunta sobre cifrado o almacenamiento seguro de claves, consulta a tu especialista con la herramienta.
+    \"\"\",
+    tools=[AgentTool(especialista_cripto)]
+)
+
+session_at = await session_service.create_session(session_id="sesion_agent_tool", user_id="dev", state={})
+runner_at = Runner(agent=coordinador, session_service=session_service)
+
+pregunta_cripto = "Queremos almacenar contraseñas en MySQL usando MD5 con salt. ¿Es buena idea?"
+print(f"👤 [Usuario]: {pregunta_cripto}\\n")
+
+async for event in runner_at.run_async(session_id=session_at.id, user_id="dev", prompt=pregunta_cripto):
+    if event.author:
+        print(f">> [Evento de: {event.author}]")
+    if event.content:
+        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+        print(text[:300] + "...\\n")
+"""))
+
+    cells.append(make_cell("markdown", """### 7.2 ADK 2.0 Task Delegation con Esquemas Pydantic (`mode="task"`)
+* Configurar `mode="task"` en un subagente le inyecta automáticamente la tool `finish_task`.
+* El coordinador recibe automáticamente la tool `request_task_{nombre_subagente}`.
+* Mediante `output_schema` con modelos **Pydantic**, la respuesta se valida antes de volver al coordinador."""))
+
+    cells.append(make_cell("code", """from pydantic import BaseModel, Field
+from typing import List, Literal
+
+class Vulnerabilidad(BaseModel):
+    modulo: str = Field(description="Módulo afectado")
+    severidad: Literal["baja", "media", "alta", "critica"] = Field(description="Severidad")
+    descripcion: str = Field(description="Explicación del riesgo")
+
+class ReporteAuditoria(BaseModel):
+    resumen: str = Field(description="Resumen de auditoría")
+    vulnerabilidades: List[Vulnerabilidad] = Field(description="Lista de hallazgos")
+    aprobado_produccion: bool = Field(description="True si se aprueba")
+
+subagente_auditor = Agent(
+    name="auditor_task",
+    model=local_model,
+    mode="task",  # Inyecta 'finish_task'
+    output_schema=ReporteAuditoria,  # Contrato garantizado con Pydantic
+    description="Audita componentes de software y retorna un ReporteAuditoria estructurado.",
+    instruction="Audita el código y llama a finish_task con el modelo ReporteAuditoria completo."
+)
+
+coordinador_release = Agent(
+    name="release_manager",
+    model=local_model,
+    instruction=\"\"\"
+    Eres el Release Manager.
+    1. Delega la revisión técnica usando la herramienta request_task_auditor_task.
+    2. Analiza el reporte estructurado devuelto.
+    3. Si aprobado_produccion es False, bloquea el pase y explica los riesgos.
+    \"\"\",
+    sub_agents=[subagente_auditor]  # Inyecta 'request_task_auditor_task'
+)
+
+session_task = await session_service.create_session(session_id="sesion_task_mode", user_id="lead", state={})
+runner_task = Runner(agent=coordinador_release, session_service=session_service)
+
+propuesta = "Lanzamiento de API de facturación: Se guarda el token de pago en logs en texto claro para depuración."
+print(f"📦 [Propuesta de Release]: {propuesta}\\n")
+
+async for event in runner_task.run_async(session_id=session_task.id, user_id="lead", prompt=propuesta):
+    if event.author:
+        print(f">> [Evento de: {event.author}]")
+    if event.content:
+        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+        print(text[:300] + "...\\n")
+"""))
+
+    # -------------------------------------------------------------
+    # SECCIÓN 8: PROYECTO CAPSTONE
+    # -------------------------------------------------------------
+    cells.append(make_cell("markdown", """## 8. Proyecto Capstone: Local Software Architect & Security Agency
+Integramos todo lo aprendido en una agencia multi-agente de arquitectura de software:
+1. **Product Manager (Analista Funcional):** Desglose de requisitos y entidades.
+2. **Auditoría Paralela:**
+   - Especialista en Rendimiento de Base de Datos y Caché.
+   - Especialista en Ciberseguridad y Normativas (OAuth2, HIPAA, Zero Trust).
+   - Uso de `ToolContext` para calificar el nivel de madurez técnica (`scores_calidad`).
+3. **CTO Sintetizador:** Genera el Blueprint de Arquitectura final y el Roadmap en 3 fases."""))
+
+    cells.append(make_cell("code", """def puntuar_auditoria(area: str, nota_0_a_100: int, tool_context: ToolContext) -> dict:
+    \"\"\"Registra la puntuación técnica de un área en el estado de la sesión.\"\"\"
+    scores = tool_context.state.get("scores_calidad", {})
+    scores[area] = nota_0_a_100
+    tool_context.state["scores_calidad"] = scores
+    return {"status": "success", "mensaje": f"Puntuación {nota_0_a_100}/100 guardada para {area}"}
+
+# 1. Analista Funcional
+pm = Agent(
+    name="lead_pm",
+    model=local_model,
+    instruction="Resume en 2 oraciones la visión del producto y lista los 2 módulos técnicos indispensables.",
+    output_key="analisis_producto"
+)
+
+# 2. Especialistas Paralelos con Tools
+arquitecto_db = Agent(
+    name="arquitecto_datos",
+    model=local_model,
+    instruction=\"\"\"
+    Basándote en {analisis_producto}:
+    Diseña el modelo de datos (SQL vs NoSQL) y estrategia de caché.
+    Usa la tool puntuar_auditoria para registrar tu calificación (0-100).
+    \"\"\",
+    tools=[puntuar_auditoria],
+    output_key="dictamen_db"
+)
+
+auditor_ciso = Agent(
+    name="ciso_seguridad",
+    model=local_model,
+    instruction=\"\"\"
+    Basándote en {analisis_producto}:
+    Evalúa autenticación (OAuth2), cifrado y cumplimiento (HIPAA / GDPR).
+    Usa la tool puntuar_auditoria para registrar tu calificación (0-100).
+    \"\"\",
+    tools=[puntuar_auditoria],
+    output_key="dictamen_sec"
+)
+
+# 3. CTO Sintetizador
+cto = Agent(
+    name="cto_ejecutivo",
+    model=local_model,
+    instruction=\"\"\"
+    Eres el CTO. Has recibido:
+    - Análisis: {analisis_producto}
+    - Datos: {dictamen_db}
+    - Seguridad: {dictamen_sec}
+    
+    Elabora el Blueprint Arquitectónico Final con stack recomendado y Roadmap en 3 fases.
+    \"\"\",
+    output_key="blueprint_final"
+)
+
+# Ensamblaje en pipeline híbrido: Secuencial -> Paralelo -> Secuencial
+agencia = SequentialAgent(
+    name="agencia_arquitectura_local",
+    sub_agents=[
+        pm,
+        ParallelAgent(name="auditoria_concurrente", sub_agents=[arquitecto_db, auditor_ciso]),
+        cto
+    ]
+)
+
+session_capstone = await session_service.create_session(
+    session_id="sesion_capstone",
+    user_id="founder",
+    state={"scores_calidad": {}}
+)
+runner_capstone = Runner(agent=agencia, session_service=session_service)
+
+caso_telemedicina = \"\"\"
+Plataforma de telemedicina con videollamadas encriptadas de extremo a extremo,
+recetas médicas firmadas digitalmente y cobros recurrentes para 50,000 pacientes.
+\"\"\"
+
+print("🏢 [INICIANDO EJECUCIÓN DE LA AGENCIA MULTI-AGENTE CAPSTONE]\\n")
+async for event in runner_capstone.run_async(session_id=session_capstone.id, user_id="founder", prompt=caso_telemedicina):
+    if event.author:
+        print(f"⭐ [FASE: {event.author.upper()}]")
+    if event.content:
+        text = event.content.parts[0].text if hasattr(event.content, "parts") else str(event.content)
+        print(text[:300] + "...\\n")
+
+sesion_final = await session_service.get_session(session_id=session_capstone.id, user_id="founder")
+print("=" * 60)
+print("📊 [RESUMEN FINAL CONSOLIDADO EN ESTADO]:")
+print("• Scores registrados por las tools:", sesion_final.state.get("scores_calidad"))
+print("• Clave 'blueprint_final' presente:", "blueprint_final" in sesion_final.state)
+print("=" * 60)
+"""))
+
+    # -------------------------------------------------------------
+    # SECCIÓN 9: CONCLUSIONES Y MEJORES PRÁCTICAS
+    # -------------------------------------------------------------
+    cells.append(make_cell("markdown", """## 9. Ciclo de Vida del Agente (ADLC) y Buenas Prácticas
+Basado en las recomendaciones del equipo de **Google Agents-CLI**:
+
+1. **Scaffolding Estandarizado:** Mantén tus agentes desacoplados con carpetas claras (`agent.py`, `tools.py`, `.env`).
+2. **Temperatura Baja en Modelos Locales:** Usa `temperature=0.1` o `0.2` para asegurar que las llamadas a herramientas y formatos JSON no alucinen.
+3. **Limpieza de Historial Conversacional:** En subagentes especializados, usa `include_contents='none'` para que no carguen el historial del diálogo padre.
+4. **Evaluaciones con Datasets:** Usa `agents-cli eval run` con criterios de "LLM-as-a-judge" antes de pasar cualquier agente a producción.
+5. **Observabilidad:** Monitoriza eventos de parada, tiempos de respuesta y tokens mediante OpenTelemetry.
+
+---
+**¡Felicitaciones! Has dominado Google ADK 2.0 y la construcción de sistemas multi-agente en local.**
+"""))
+
+    notebook = {
+        "cells": cells,
+        "metadata": {
+            "kernelspec": {
+                "display_name": "Python 3",
+                "language": "python",
+                "name": "python3"
+            },
+            "language_info": {
+                "codemirror_mode": {
+                    "name": "ipython",
+                    "version": 3
+                },
+                "file_extension": ".py",
+                "mimetype": "text/x-python",
+                "name": "python",
+                "nbformat": 4,
+                "nbformat_minor": 5,
+                "pygments_lexer": "ipython3",
+                "version": "3.11.0"
+            }
+        },
+        "nbformat": 4,
+        "nbformat_minor": 5
+    }
+
+    target_path = "/Users/roberto/proyectods/cursoADK/curso_adk2_completo.ipynb"
+    with open(target_path, "w", encoding="utf-8") as f:
+        json.dump(notebook, f, indent=2, ensure_ascii=False)
+
+    print(f"✓ Notebook creado exitosamente con {len(cells)} celdas en: {target_path}")
+
+if __name__ == "__main__":
+    build_notebook()

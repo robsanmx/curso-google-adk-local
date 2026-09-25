@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Curso Google ADK 2.0: De Single-Agent a Multi-Agent Local</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .slide-active {
+      display: flex !important;
+      animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    pre, code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+      white-space: pre !important;
+    }
+    .code-window {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    }
+    .code-header {
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-full flex flex-col antialiased select-none font-sans overflow-hidden">
+
+  <!-- BARRA DE PROGRESO SUPERIOR -->
+  <div class="w-full h-1.5 bg-slate-900 fixed top-0 left-0 z-50">
+    <div id="progressBar" class="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 transition-all duration-300 w-0"></div>
+  </div>
+
+  <!-- HEADER DE NAVEGACIÓN -->
+  <header class="h-14 border-b border-slate-800 bg-slate-900/90 backdrop-blur px-6 flex items-center justify-between z-40 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-bold text-white shadow-md shadow-blue-500/20 text-xs">
+        ADK
+      </div>
+      <div>
+        <h1 class="text-sm font-semibold tracking-tight text-slate-200">Google ADK 2.0 & Multi-Agent Local</h1>
+        <p class="text-[11px] text-slate-400">Ollama · LM Studio · MLX · google/agents-cli</p>
+      </div>
+    </div>
+
+    <!-- CONTROLES -->
+    <div class="flex items-center gap-2">
+      <span id="slideCounter" class="text-xs font-mono px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">1 / 16</span>
+      <button onclick="toggleIndexModal()" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700 flex items-center gap-1.5 transition">
+        <span>Índice</span> <kbd class="text-[10px] bg-slate-900 px-1 rounded text-slate-400">M</kbd>
+      </button>
+      <button onclick="prevSlide()" class="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" title="Anterior (←)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <button onclick="nextSlide()" class="p-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition" title="Siguiente (→)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </button>
+      <button onclick="toggleFullScreen()" class="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition" title="Pantalla Completa (F)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL DE DIAPOSITIVAS -->
+  <main class="flex-1 relative overflow-y-auto p-4 md:p-8 flex items-center justify-center">
+    <div class="max-w-5xl w-full mx-auto">
+
+      <!-- SLIDE 1: PORTADA -->
+      <section class="slide slide-active flex-col" data-title="Introducción al Curso" data-tag="INTRODUCCIÓN">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">INTRODUCCIÓN</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 1 de 16</span>
+          </div>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Google ADK 2.0 y Arquitecturas Multi-Agente</h2>
+          <p class="text-sm md:text-base text-slate-400">De un solo agente con Function Calling a orquestaciones complejas y grafos ejecutados 100% en local.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
+          <div class="p-5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-blue-500/50 transition">
+            <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl mb-3">⚡</div>
+            <h3 class="font-bold text-slate-200 mb-1">Google ADK 2.0</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">Framework oficial de Google, desacoplado, code-first y con nuevo Graph Workflow API.</p>
+          </div>
+          <div class="p-5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50 transition">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl mb-3">🔒</div>
+            <h3 class="font-bold text-slate-200 mb-1">Privacidad y Coste Cero</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">Ejecución en tu máquina con Ollama, LM Studio o MLX (Apple Silicon) mediante LiteLLM.</p>
+          </div>
+          <div class="p-5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-purple-500/50 transition">
+            <div class="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center text-xl mb-3">🛠️</div>
+            <h3 class="font-bold text-slate-200 mb-1">Agents-CLI (ADLC)</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">Mejores prácticas de Google para Scaffolding, Evaluación con LLM-as-a-judge y Observabilidad.</p>
+          </div>
+        </div>
+        <div class="mt-8 p-4 rounded-xl bg-blue-950/30 border border-blue-900/50 flex items-center justify-between text-xs text-blue-300">
+          <span>Usa las teclas <strong>←</strong> y <strong>→</strong> para navegar o pulsa <strong>M</strong> para ver el temario completo.</span>
+          <span class="font-mono bg-blue-900/50 px-2 py-0.5 rounded">github.com/google/agents-cli</span>
+        </div>
+      </section>
+
+      <!-- SLIDE 2: PRIMITIVAS DE ADK 2.0 -->
+      <section class="slide hidden flex-col" data-title="Primitivas de ADK 2.0" data-tag="MÓDULO 1: ARQUITECTURA">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 1: ARQUITECTURA</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 2 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Las Primitivas Esenciales de ADK 2.0</h2>
+          <p class="text-sm text-slate-400">Desacoplamiento riguroso entre Cognición, Capacidad, Estado y Ejecución.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <div class="text-xs font-mono text-blue-400 font-semibold mb-1">1. Agent / LlmAgent</div>
+            <p class="text-xs text-slate-300 mb-3">Unidad cognitiva central. Define el modelo local, instrucciones con variables dinámicas y herramientas asociadas.</p>
+            <div class="code-window">
+              <pre class="p-3 text-[11px] font-mono text-slate-300 overflow-x-auto leading-relaxed"><code>agent = Agent(
+    name=<span class="text-emerald-300">"dev_assistant"</span>,
+    model=local_model,
+    instruction=<span class="text-emerald-300">"Asistes a {user_name}"</span>,
+    tools=[my_tool]
+)</code></pre>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <div class="text-xs font-mono text-emerald-400 font-semibold mb-1">2. Tool & FunctionTool</div>
+            <p class="text-xs text-slate-300 mb-3">Funciones Python con anotaciones de tipo y docstrings estrictos. Soporta puertas de confirmación humana previa.</p>
+            <div class="code-window">
+              <pre class="p-3 text-[11px] font-mono text-slate-300 overflow-x-auto leading-relaxed"><code><span class="text-purple-400">from</span> google.adk.tools <span class="text-purple-400">import</span> FunctionTool
+
+secure_tool = FunctionTool(
+    func=delete_database,
+    <span class="text-amber-400">require_confirmation=True</span>
+)</code></pre>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <div class="text-xs font-mono text-purple-400 font-semibold mb-1">3. Session & State</div>
+            <p class="text-xs text-slate-300 mb-3">Almacena el historial conversacional y un diccionario clave-valor <code class="text-purple-300">state</code> compartido entre agentes y tools.</p>
+            <div class="code-window">
+              <pre class="p-3 text-[11px] font-mono text-slate-300 overflow-x-auto leading-relaxed"><code><span class="text-slate-500"># Lectura y escritura en el estado</span>
+session.state[<span class="text-emerald-300">"user_id"</span>] = <span class="text-amber-300">42</span>
+token = session.state.get(<span class="text-emerald-300">"auth_token"</span>)</code></pre>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <div class="text-xs font-mono text-amber-400 font-semibold mb-1">4. Runner & Events</div>
+            <p class="text-xs text-slate-300 mb-3">El Runner orquesta el ciclo de vida emitiendo eventos asíncronos atómicos (<code class="text-amber-300">Event</code>) para trazabilidad total.</p>
+            <div class="code-window">
+              <pre class="p-3 text-[11px] font-mono text-slate-300 overflow-x-auto leading-relaxed"><code><span class="text-purple-400">async for</span> event <span class="text-purple-400">in</span> runner.run_async(
+    session_id=session.id,
+    prompt=<span class="text-emerald-300">"¿Cómo optimizo esta query?"</span>
+):
+    <span class="text-purple-400">print</span>(event.content)</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 3: RUNTIME LOCAL -->
+      <section class="slide hidden flex-col" data-title="Runtime Local (Ollama/LM Studio/MLX)" data-tag="MÓDULO 1: ENTORNO">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 1: ENTORNO</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 3 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Configuración Local con Ollama, LM Studio y MLX</h2>
+          <p class="text-sm text-slate-400">Conectando Google ADK 2.0 con servidores locales mediante el adaptador LiteLLM.</p>
+        </div>
+
+        <div class="code-window mt-4">
+          <div class="code-header">
+            <div class="flex items-center gap-2">
+              <div class="flex gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+              </div>
+              <span class="text-slate-400 font-mono text-[11px] ml-2">config.py</span>
+            </div>
+            <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Python</span>
+          </div>
+          <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-slate-200"><code><span class="text-purple-400">from</span> google.adk.models.lite_llm <span class="text-purple-400">import</span> LiteLlm
+
+<span class="text-slate-500"># 1. OLLAMA (Endpoint nativo en http://localhost:11434)</span>
+modelo_ollama = LiteLlm(
+    model=<span class="text-emerald-300">"ollama_chat/qwen2.5:7b-instruct"</span>,
+    api_base=<span class="text-emerald-300">"http://localhost:11434"</span>,
+    temperature=<span class="text-amber-300">0.2</span>
+)
+
+<span class="text-slate-500"># 2. LM STUDIO (Servidor local OpenAI en http://localhost:1234/v1)</span>
+modelo_lmstudio = LiteLlm(
+    model=<span class="text-emerald-300">"openai/qwen2.5-7b-instruct"</span>,
+    api_base=<span class="text-emerald-300">"http://localhost:1234/v1"</span>,
+    api_key=<span class="text-emerald-300">"not-needed"</span>
+)
+
+<span class="text-slate-500"># 3. MLX APPLE SILICON (mlx-lm server en http://localhost:8080/v1)</span>
+modelo_mlx = LiteLlm(
+    model=<span class="text-emerald-300">"openai/mlx-community/Qwen2.5-7B-Instruct-4bit"</span>,
+    api_base=<span class="text-emerald-300">"http://localhost:8080/v1"</span>
+)</code></pre>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs mt-4">
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="text-blue-400 font-bold">Qwen 2.5 (7B / 14B)</span>
+            <p class="text-slate-400 mt-1">El modelo open-weights más fiable para function calling y JSON estructurado.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="text-indigo-400 font-bold">Llama 3.1 (8B)</span>
+            <p class="text-slate-400 mt-1">Excelente seguimiento de instrucciones complejas y velocidad de inferencia.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="text-purple-400 font-bold">Mistral Nemo (12B)</span>
+            <p class="text-slate-400 mt-1">Ventana masiva de 128k tokens, ideal para documentación extensa.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 4: SINGLE AGENT -->
+      <section class="slide hidden flex-col" data-title="Single-Agent y Estado Dinámico" data-tag="MÓDULO 1: SINGLE AGENT">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 1: SINGLE AGENT</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 4 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Single-Agent: Inyección Dinámica y Persistencia</h2>
+          <p class="text-sm text-slate-400">Uso de placeholders en instrucciones y guardado automático con output_key.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="code-window">
+            <div class="code-header">
+              <span class="text-slate-400 font-mono text-[11px]">01_basic_agent.py</span>
+              <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">ADK 2.0</span>
+            </div>
+            <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-slate-200"><code><span class="text-purple-400">from</span> google.adk.agents <span class="text-purple-400">import</span> Agent
+
+agente = Agent(
+    name=<span class="text-emerald-300">"asistente_dev"</span>,
+    model=local_model,
+    instruction=<span class="text-emerald-300">"""
+    Eres un {rol_asignado}.
+    Asistes a {nombre_usuario}.
+    
+    Reglas:
+    - Responde en código conciso.
+    - Considera seguridad y latencia.
+    """</span>,
+    <span class="text-amber-400">output_key</span>=<span class="text-emerald-300">"ultima_respuesta"</span>
+)</code></pre>
+          </div>
+
+          <div class="flex flex-col justify-center space-y-3 text-xs text-slate-300">
+            <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+              <strong class="text-blue-400 block mb-1">Inyección Dinámica de Estado:</strong>
+              <p class="text-slate-400 leading-relaxed">Los parámetros <code class="text-slate-200">{rol_asignado}</code> y <code class="text-slate-200">{nombre_usuario}</code> se extraen automáticamente de <code class="text-slate-200">session.state</code> en cada llamada, sin formateo manual de strings.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+              <strong class="text-amber-400 block mb-1">output_key automático:</strong>
+              <p class="text-slate-400 leading-relaxed">Evita parseos manuales. El resultado final se guarda de inmediato en el estado de la sesión, listo para que otros agentes o herramientas lo consuman.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 5: HERRAMIENTAS Y TOOLCONTEXT -->
+      <section class="slide hidden flex-col" data-title="Herramientas y ToolContext" data-tag="MÓDULO 1: HERRAMIENTAS">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 1: HERRAMIENTAS</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 5 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Function Calling Estricto y ToolContext</h2>
+          <p class="text-sm text-slate-400">Acceso y mutación del estado conversacional desde dentro de las herramientas.</p>
+        </div>
+
+        <div class="code-window mt-4">
+          <div class="code-header">
+            <span class="text-slate-400 font-mono text-[11px]">02_tools_and_context.py</span>
+            <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Python</span>
+          </div>
+          <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-slate-200"><code><span class="text-purple-400">from</span> google.adk.tools <span class="text-purple-400">import</span> ToolContext
+
+<span class="text-purple-400">def</span> <span class="text-amber-300">registrar_alerta</span>(severidad: <span class="text-sky-300">str</span>, detalle: <span class="text-sky-300">str</span>, <span class="text-amber-400">tool_context: ToolContext</span>) -> <span class="text-sky-300">dict</span>:
+    <span class="text-emerald-300">"""Registra una alerta técnica de seguridad en la sesión.
+
+    Args:
+        severidad: Nivel de la alerta ('baja', 'media', 'alta', 'critica').
+        detalle: Explicación de la vulnerabilidad o anomalía.
+
+    Returns:
+        dict con el estado de guardado y total de alertas.
+    """</span>
+    <span class="text-slate-500"># Acceso directo al estado de la sesión activa</span>
+    alertas = tool_context.state.get(<span class="text-emerald-300">"alertas"</span>, [])
+    alertas.append({<span class="text-emerald-300">"severidad"</span>: severidad, <span class="text-emerald-300">"detalle"</span>: detalle})
+    tool_context.state[<span class="text-emerald-300">"alertas"</span>] = alertas
+    
+    <span class="text-purple-400">return</span> {<span class="text-emerald-300">"status"</span>: <span class="text-emerald-300">"success"</span>, <span class="text-emerald-300">"total_alertas"</span>: <span class="text-purple-400">len</span>(alertas)}</code></pre>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2.5 text-[11px] text-slate-300 mt-4">
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="text-emerald-400 font-bold block mb-1">1. Docstring Obligatorio</span>
+            <p class="text-slate-400">El LLM decide usar la herramienta basándose únicamente en la descripción.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="text-blue-400 font-bold block mb-1">2. Type Hints Estrictos</span>
+            <p class="text-slate-400">Anotaciones de tipos en todos los argumentos (evitar tipos genéricos o ANY).</p>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="text-purple-400 font-bold block mb-1">3. Retorno JSON (dict)</span>
+            <p class="text-slate-400">Devolver estructuras diccionario serializables para consumo del modelo.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="text-amber-400 font-bold block mb-1">4. ToolContext Oculto</span>
+            <p class="text-slate-400">No mencionar tool_context en el docstring; ADK lo inyecta por el framework.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 6: HUMAN IN THE LOOP -->
+      <section class="slide hidden flex-col" data-title="Human-in-the-Loop y Seguridad" data-tag="MÓDULO 1: SEGURIDAD">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 1: SEGURIDAD</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 6 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Human-in-the-Loop: Puertas de Confirmación</h2>
+          <p class="text-sm text-slate-400">Garantizando que acciones destructivas o críticas requieran autorización explícita.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="code-window">
+            <div class="code-header">
+              <span class="text-slate-400 font-mono text-[11px]">03_human_confirmation.py</span>
+              <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Python</span>
+            </div>
+            <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-slate-200"><code><span class="text-purple-400">from</span> google.adk.tools <span class="text-purple-400">import</span> FunctionTool
+
+<span class="text-slate-500"># 1. Confirmación incondicional</span>
+tool_borrado = FunctionTool(
+    borrar_base_datos,
+    <span class="text-amber-400">require_confirmation=True</span>
+)
+
+<span class="text-slate-500"># 2. Confirmación basada en regla</span>
+<span class="text-purple-400">def</span> <span class="text-amber-300">requiere_aprobacion</span>(servicio: <span class="text-sky-300">str</span>, **kwargs) -> <span class="text-sky-300">bool</span>:
+    <span class="text-purple-400">return</span> servicio <span class="text-purple-400">in</span> [<span class="text-emerald-300">"postgresql"</span>, <span class="text-emerald-300">"redis"</span>]
+
+tool_reinicio = FunctionTool(
+    reiniciar_servicio,
+    <span class="text-amber-400">require_confirmation=requiere_aprobacion</span>
+)</code></pre>
+          </div>
+
+          <div class="flex flex-col justify-center space-y-3 text-xs text-slate-300">
+            <div class="p-4 rounded-xl bg-emerald-950/30 border border-emerald-900/50">
+              <strong class="text-emerald-300 block mb-1">Intercepción Automática por el Runner:</strong>
+              <p class="text-slate-400 leading-relaxed">Cuando el LLM decide llamar a la función, el Runner suspende el turno y emite un evento de confirmación hacia la interfaz de usuario antes de ejecutar el código.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+              <strong class="text-blue-400 block mb-1">Auditoría y Resumability:</strong>
+              <p class="text-slate-400 leading-relaxed">Permite guardar la sesión en base de datos y reanudar la ejecución únicamente tras la firma o clic del operador humano.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 7: SEQUENTIAL AGENT -->
+      <section class="slide hidden flex-col" data-title="SequentialAgent Pipeline" data-tag="MÓDULO 2: ORQUESTACIÓN">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 2: ORQUESTACIÓN</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 7 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Orquestación Determinista: SequentialAgent</h2>
+          <p class="text-sm text-slate-400">Canalizaciones lineales predecibles y de bajo coste computacional.</p>
+        </div>
+
+        <div class="flex items-center justify-center py-3 bg-slate-900/60 rounded-xl border border-slate-800 mt-3">
+          <div class="flex items-center gap-3 text-xs font-mono">
+            <div class="px-3 py-1.5 rounded bg-blue-600/30 border border-blue-500 text-blue-300">Analizador Requisitos<br><span class="text-[10px] text-slate-400">output_key="analisis"</span></div>
+            <div class="text-slate-500">───►</div>
+            <div class="px-3 py-1.5 rounded bg-purple-600/30 border border-purple-500 text-purple-300">Diseñador Base Datos<br><span class="text-[10px] text-slate-400">output_key="schema_sql"</span></div>
+            <div class="text-slate-500">───►</div>
+            <div class="px-3 py-1.5 rounded bg-emerald-600/30 border border-emerald-500 text-emerald-300">Generador de APIs<br><span class="text-[10px] text-slate-400">output_key="api_spec"</span></div>
+          </div>
+        </div>
+
+        <div class="code-window mt-3">
+          <div class="code-header">
+            <span class="text-slate-400 font-mono text-[11px]">01_sequential_pipeline.py</span>
+            <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Python</span>
+          </div>
+          <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-slate-200"><code><span class="text-purple-400">from</span> google.adk.agents <span class="text-purple-400">import</span> SequentialAgent, Agent
+
+analizador = Agent(name=<span class="text-emerald-300">"analizador"</span>, model=local_model, output_key=<span class="text-emerald-300">"analisis"</span>)
+arquitecto_db = Agent(name=<span class="text-emerald-300">"db_architect"</span>, model=local_model, instruction=<span class="text-emerald-300">"Diseña SQL para: {analisis}"</span>, output_key=<span class="text-emerald-300">"schema_sql"</span>)
+disenador_api = Agent(name=<span class="text-emerald-300">"api_designer"</span>, model=local_model, instruction=<span class="text-emerald-300">"Diseña endpoints para: {schema_sql}"</span>, output_key=<span class="text-emerald-300">"api_spec"</span>)
+
+<span class="text-slate-500"># Encadenamiento determinista estricto</span>
+pipeline = SequentialAgent(
+    name=<span class="text-emerald-300">"software_design_pipeline"</span>,
+    sub_agents=[analizador, arquitecto_db, disenador_api]
+)</code></pre>
+        </div>
+      </section>
+
+      <!-- SLIDE 8: PARALLEL AGENT -->
+      <section class="slide hidden flex-col" data-title="ParallelAgent Concurrency" data-tag="MÓDULO 2: ORQUESTACIÓN">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 2: ORQUESTACIÓN</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 8 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Concurrencia Local con ParallelAgent</h2>
+          <p class="text-sm text-slate-400">Multi-procesamiento simultáneo y prevención de condiciones de carrera.</p>
+        </div>
+
+        <div class="flex items-center justify-center py-3 bg-slate-900/60 rounded-xl border border-slate-800 mt-3">
+          <div class="flex items-center gap-3 text-xs font-mono">
+            <div class="flex flex-col gap-1.5">
+              <div class="px-3 py-1 rounded bg-red-950/50 border border-red-800 text-red-300 text-[11px]">Auditor Seguridad (output_key="sec")</div>
+              <div class="px-3 py-1 rounded bg-yellow-950/50 border border-yellow-800 text-yellow-300 text-[11px]">Optimizador Perf (output_key="perf")</div>
+              <div class="px-3 py-1 rounded bg-blue-950/50 border border-blue-800 text-blue-300 text-[11px]">Experto CleanCode (output_key="dx")</div>
+            </div>
+            <div class="text-slate-500">──────►</div>
+            <div class="px-4 py-3 rounded bg-emerald-600/20 border border-emerald-500 text-emerald-300 text-center font-bold text-xs">
+              Sintetizador Técnico<br><span class="text-[10px] font-normal text-slate-300">Lee {sec}, {perf}, {dx}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="code-window mt-3">
+          <div class="code-header">
+            <span class="text-slate-400 font-mono text-[11px]">02_parallel_fanout.py</span>
+            <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Python</span>
+          </div>
+          <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-slate-200"><code><span class="text-purple-400">from</span> google.adk.agents <span class="text-purple-400">import</span> ParallelAgent, SequentialAgent
+
+pipeline = SequentialAgent(
+    name=<span class="text-emerald-300">"auditoria_hibrida"</span>,
+    sub_agents=[
+        ParallelAgent(
+            name=<span class="text-emerald-300">"paralelos"</span>,
+            sub_agents=[auditor_sec, optimizador_perf, experto_dx]  <span class="text-slate-500"># Claves de salida únicas</span>
+        ),
+        sintetizador  <span class="text-slate-500"># Sintetiza los 3 reportes una vez finalizados</span>
+    ]
+)</code></pre>
+        </div>
+      </section>
+
+      <!-- SLIDE 9: LOOP AGENT -->
+      <section class="slide hidden flex-col" data-title="LoopAgent y EscalationChecker" data-tag="MÓDULO 2: ORQUESTACIÓN">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 2: ORQUESTACIÓN</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 9 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Bucles de Refinamiento: LoopAgent & Escalation</h2>
+          <p class="text-sm text-slate-400">Ciclos iterativos de Generación -> Evaluación -> Parada Temprana.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="code-window">
+            <div class="code-header">
+              <span class="text-slate-400 font-mono text-[11px]">03_loop_refinement.py</span>
+              <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Python</span>
+            </div>
+            <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-slate-200"><code><span class="text-purple-400">class</span> <span class="text-amber-300">EscalationChecker</span>(BaseAgent):
+    <span class="text-purple-400">async def</span> <span class="text-amber-300">_run_async_impl</span>(self, ctx):
+        res = ctx.session.state.get(<span class="text-emerald-300">"evaluacion"</span>)
+        <span class="text-purple-400">if</span> res <span class="text-purple-400">and</span> <span class="text-emerald-300">"APROBADO"</span> <span class="text-purple-400">in</span> res:
+            <span class="text-slate-500"># Detiene el bucle inmediatamente</span>
+            <span class="text-purple-400">yield</span> Event(
+                author=self.name,
+                actions=<span class="text-amber-400">EventActions(escalate=True)</span>
+            )
+        <span class="text-purple-400">else</span>:
+            <span class="text-purple-400">yield</span> Event(author=self.name)
+
+loop = LoopAgent(
+    name=<span class="text-emerald-300">"refinador"</span>,
+    sub_agents=[generador, evaluador, EscalationChecker(<span class="text-emerald-300">"stop"</span>)],
+    <span class="text-amber-400">max_iterations=4</span>  <span class="text-slate-500"># Circuit breaker</span>
+)</code></pre>
+          </div>
+
+          <div class="flex flex-col justify-center space-y-3 text-xs text-slate-300">
+            <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+              <strong class="text-purple-400 block mb-1">1. Generar Código:</strong>
+              <p class="text-slate-400">El agente programador produce una solución inicial o iterada.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+              <strong class="text-yellow-400 block mb-1">2. Evaluar Rigurosamente:</strong>
+              <p class="text-slate-400">El agente evaluador revisa tipado, tests y complejidad algorítmica.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-emerald-950/30 border border-emerald-900/50">
+              <strong class="text-emerald-400 block mb-1">3. EscalationChecker:</strong>
+              <p class="text-slate-400">Si la nota es suficiente, activa <code class="text-emerald-300">escalate=True</code> para terminar inmediatamente sin agotar todas las iteraciones.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 10: GRAPH WORKFLOWS ADK 2.0 -->
+      <section class="slide hidden flex-col" data-title="Graph Workflow API de ADK 2.0" data-tag="MÓDULO 3: GRAFOS">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 3: GRAFOS</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 10 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">La Revolución de ADK 2.0: Graph Workflow API</h2>
+          <p class="text-sm text-slate-400">Grafos Dirigidos de Nodos y Aristas para flujos dinámicos e interactivos.</p>
+        </div>
+
+        <div class="code-window mt-4">
+          <div class="code-header">
+            <span class="text-slate-400 font-mono text-[11px]">01_graph_basics.py</span>
+            <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">ADK 2.0 Graph API</span>
+          </div>
+          <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-slate-200"><code><span class="text-purple-400">from</span> google.adk.workflow <span class="text-purple-400">import</span> Workflow
+
+<span class="text-purple-400">def</span> <span class="text-amber-300">normalizar_texto</span>(node_input: <span class="text-sky-300">str</span>) -> <span class="text-sky-300">str</span>:
+    <span class="text-purple-400">return</span> node_input.strip().upper()
+
+<span class="text-slate-500"># Auto-wrapping: Funciones Python y LLMs se convierten en nodos automáticamente</span>
+grafo = Workflow(
+    name=<span class="text-emerald-300">"soporte_workflow"</span>,
+    <span class="text-amber-400">edges</span>=[
+        (<span class="text-emerald-300">"START"</span>, normalizar_texto),
+        (normalizar_texto, agente_experto)
+    ]
+)</code></pre>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-slate-300 mt-4">
+          <div class="p-3 rounded bg-slate-900 border border-slate-800">
+            <strong class="text-blue-400 block mb-1">START Built-In:</strong>
+            <p class="text-slate-400">Nodo de entrada estándar que recibe la petición o prompt del usuario.</p>
+          </div>
+          <div class="p-3 rounded bg-slate-900 border border-slate-800">
+            <strong class="text-purple-400 block mb-1">Auto-wrapping:</strong>
+            <p class="text-slate-400">No necesitas envolver funciones ni agentes a mano; ADK crea FunctionNodes automáticamente.</p>
+          </div>
+          <div class="p-3 rounded bg-slate-900 border border-slate-800">
+            <strong class="text-emerald-400 block mb-1">Resolución de Parámetros:</strong>
+            <p class="text-slate-400"><code class="text-emerald-300">node_input</code> recibe la salida del predecesor; otros argumentos se extraen de <code class="text-emerald-300">ctx.state</code>.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 11: GRAPH CONDITIONAL ROUTING -->
+      <section class="slide hidden flex-col" data-title="Enrutamiento Condicional en Grafos" data-tag="MÓDULO 3: GRAFOS">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 3: GRAFOS</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 11 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Enrutamiento Condicional en Grafos</h2>
+          <p class="text-sm text-slate-400">Bifurcaciones por condición y rutas por defecto (__DEFAULT__).</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="code-window">
+            <div class="code-header">
+              <span class="text-slate-400 font-mono text-[11px]">02_conditional_routing.py</span>
+              <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Python</span>
+            </div>
+            <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-slate-200"><code><span class="text-purple-400">def</span> <span class="text-amber-300">clasificador</span>(node_input: <span class="text-sky-300">str</span>) -> Event:
+    <span class="text-purple-400">if</span> <span class="text-emerald-300">"error"</span> <span class="text-purple-400">in</span> node_input:
+        <span class="text-purple-400">return</span> Event(output=node_input, <span class="text-amber-400">route="codigo"</span>)
+    <span class="text-purple-400">elif</span> <span class="text-emerald-300">"vulnerabilidad"</span> <span class="text-purple-400">in</span> node_input:
+        <span class="text-purple-400">return</span> Event(output=node_input, <span class="text-amber-400">route="seguridad"</span>)
+    <span class="text-purple-400">return</span> Event(output=node_input, <span class="text-amber-400">route="__DEFAULT__"</span>)
+
+grafo = Workflow(
+    name=<span class="text-emerald-300">"router_dinamico"</span>,
+    edges=[
+        (<span class="text-emerald-300">"START"</span>, clasificador),
+        (clasificador, agente_codigo, <span class="text-amber-400">"codigo"</span>),
+        (clasificador, agente_seguridad, <span class="text-amber-400">"seguridad"</span>),
+        (clasificador, agente_general, <span class="text-amber-400">"__DEFAULT__"</span>),
+    ]
+)</code></pre>
+          </div>
+
+          <div class="flex flex-col justify-center space-y-3 text-xs text-slate-300">
+            <div class="p-4 rounded-xl bg-blue-950/30 border border-blue-900/50">
+              <strong class="text-blue-300 block mb-1">Event con route:</strong>
+              <p class="text-slate-400 leading-relaxed">El nodo emite el objeto <code class="text-slate-200">Event</code> con el payload en <code class="text-slate-200">output</code> y el identificador de rama en <code class="text-slate-200">route</code>.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-emerald-950/30 border border-emerald-900/50">
+              <strong class="text-emerald-300 block mb-1">Garantía de Fallback:</strong>
+              <p class="text-slate-400 leading-relaxed">La arista especial <code class="text-emerald-200">__DEFAULT__</code> evita bloqueos en el grafo si ninguna condición coincide con la intención.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 12: FAN-OUT & JOINNODE -->
+      <section class="slide hidden flex-col" data-title="Fan-Out & Fan-In con JoinNode" data-tag="MÓDULO 3: GRAFOS">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 3: GRAFOS</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 12 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Fan-Out y Fan-In con JoinNode</h2>
+          <p class="text-sm text-slate-400">Bifurcación hacia ramas concurrentes y convergencia estructurada.</p>
+        </div>
+
+        <div class="flex items-center justify-center py-3 bg-slate-900/60 rounded-xl border border-slate-800 mt-3">
+          <div class="flex items-center gap-3 text-xs font-mono">
+            <div class="px-2 py-1 bg-slate-800 text-slate-300 rounded">START</div>
+            <div class="text-slate-500">──►</div>
+            <div class="flex flex-col gap-1.5">
+              <div class="px-3 py-1 bg-blue-950 border border-blue-800 text-blue-300 rounded text-[11px]">Rama A: Analizar Costos</div>
+              <div class="px-3 py-1 bg-purple-950 border border-purple-800 text-purple-300 rounded text-[11px]">Rama B: Auditar Red</div>
+            </div>
+            <div class="text-slate-500">──►</div>
+            <div class="px-3 py-2 bg-amber-950 border border-amber-800 text-amber-300 rounded font-bold text-center text-xs">JoinNode<br><span class="text-[10px] font-normal text-slate-300">{"rama_a": ..., "rama_b": ...}</span></div>
+            <div class="text-slate-500">──►</div>
+            <div class="px-3 py-1 bg-emerald-950 border border-emerald-800 text-emerald-300 rounded text-[11px]">Decisor Final</div>
+          </div>
+        </div>
+
+        <div class="code-window mt-3">
+          <div class="code-header">
+            <span class="text-slate-400 font-mono text-[11px]">03_fanout_join_graph.py</span>
+            <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Python</span>
+          </div>
+          <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-slate-200"><code><span class="text-purple-400">from</span> google.adk.workflow <span class="text-purple-400">import</span> Workflow, JoinNode
+
+sincronizador = JoinNode(name=<span class="text-emerald-300">"merge"</span>)
+
+grafo = Workflow(
+    name=<span class="text-emerald-300">"evaluacion_infra"</span>,
+    edges=[
+        (<span class="text-emerald-300">"START"</span>, (analizar_costos, auditar_red)),   <span class="text-slate-500"># 1. Fan-Out paralelo</span>
+        ((analizar_costos, auditar_red), sincronizador),  <span class="text-slate-500"># 2. Fan-In convergente</span>
+        (sincronizador, arquitecto_decisor)               <span class="text-slate-500"># 3. Recibe dict con ambas ramas</span>
+    ]
+)</code></pre>
+        </div>
+      </section>
+
+      <!-- SLIDE 13: AGENT AS A TOOL -->
+      <section class="slide hidden flex-col" data-title="Patrón AgentTool" data-tag="MÓDULO 4: MULTI-AGENT">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 4: MULTI-AGENT</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 13 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Agente como Herramienta: Patrón AgentTool</h2>
+          <p class="text-sm text-slate-400">Invocación especializada sin perder la titularidad de la conversación.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="code-window">
+            <div class="code-header">
+              <span class="text-slate-400 font-mono text-[11px]">01_agent_as_tool.py</span>
+              <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Python</span>
+            </div>
+            <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-slate-200"><code><span class="text-purple-400">from</span> google.adk.tools <span class="text-purple-400">import</span> AgentTool
+
+<span class="text-slate-500"># Agente especialista enfocado</span>
+experto_cripto = Agent(
+    name=<span class="text-emerald-300">"experto_cripto"</span>,
+    description=<span class="text-emerald-300">"Analiza algoritmos criptográficos y hashing."</span>,
+    instruction=<span class="text-emerald-300">"Evalúa si el cifrado cumple estándares modernos."</span>
+)
+
+<span class="text-slate-500"># Coordinador general</span>
+coordinador = Agent(
+    name=<span class="text-emerald-300">"arquitecto_principal"</span>,
+    instruction=<span class="text-emerald-300">"Atiende al cliente. Si hay dudas de cifrado, consulta a tu experto."</span>,
+    <span class="text-amber-400">tools=[AgentTool(experto_cripto)]</span>
+)</code></pre>
+          </div>
+
+          <div class="flex flex-col justify-center space-y-3 text-xs text-slate-300">
+            <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+              <strong class="text-blue-400 block mb-1">Control Conversacional Centralizado:</strong>
+              <p class="text-slate-400 leading-relaxed">El usuario siempre habla con el coordinador; el especialista opera tras bambalinas como una función inteligente.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-emerald-950/30 border border-emerald-900/50">
+              <strong class="text-emerald-400 block mb-1">Aislamiento de Contexto:</strong>
+              <p class="text-slate-400 leading-relaxed">El subagente sólo recibe la pregunta específica, evitando saturar la ventana de contexto del modelo local.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 14: TASK DELEGATION CON PYDANTIC -->
+      <section class="slide hidden flex-col" data-title="Task Delegation con Pydantic" data-tag="MÓDULO 4: MULTI-AGENT">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">MÓDULO 4: MULTI-AGENT</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 14 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Task Delegation Tipada con Pydantic (ADK 2.0)</h2>
+          <p class="text-sm text-slate-400">Contratos de datos estrictos mediante mode='task', request_task y finish_task.</p>
+        </div>
+
+        <div class="code-window mt-4">
+          <div class="code-header">
+            <span class="text-slate-400 font-mono text-[11px]">02_task_delegation_pydantic.py</span>
+            <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">ADK 2.0 Task Mode</span>
+          </div>
+          <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-slate-200"><code><span class="text-purple-400">from</span> pydantic <span class="text-purple-400">import</span> BaseModel, Field
+<span class="text-purple-400">from</span> google.adk.agents <span class="text-purple-400">import</span> Agent
+
+<span class="text-purple-400">class</span> <span class="text-amber-300">AuditReport</span>(BaseModel):
+    score: <span class="text-sky-300">int</span> = Field(description=<span class="text-emerald-300">"Calificación de 0 a 100"</span>)
+    aprobado: <span class="text-sky-300">bool</span> = Field(description=<span class="text-emerald-300">"True si cumple todos los requisitos"</span>)
+
+auditor = Agent(
+    name=<span class="text-emerald-300">"auditor"</span>,
+    model=local_model,
+    <span class="text-amber-400">mode="task"</span>,                <span class="text-slate-500"># ADK inyecta automáticamente 'finish_task'</span>
+    output_schema=AuditReport,  <span class="text-slate-500"># Contrato Pydantic garantizado</span>
+    description=<span class="text-emerald-300">"Audita la arquitectura de software."</span>
+)
+
+coordinador = Agent(
+    name=<span class="text-emerald-300">"coordinador"</span>,
+    model=local_model,
+    sub_agents=[auditor]        <span class="text-slate-500"># ADK inyecta automáticamente 'request_task_auditor'</span>
+)</code></pre>
+        </div>
+
+        <div class="p-3 rounded-lg bg-purple-950/20 border border-purple-900/50 text-xs text-purple-300 mt-4">
+          💡 <strong>Cero Alucinaciones de Estructura:</strong> El coordinador recibe un objeto Python fuertemente validado por Pydantic antes de proseguir su razonamiento.
+        </div>
+      </section>
+
+      <!-- SLIDE 15: PROYECTO CAPSTONE -->
+      <section class="slide hidden flex-col" data-title="Proyecto Capstone" data-tag="PROYECTO FINAL">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">PROYECTO FINAL</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 15 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Proyecto Capstone: Local Software Architect Agency</h2>
+          <p class="text-sm text-slate-400">Un equipo multi-agente completo en ejecución local.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs mt-4">
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="text-blue-400 font-bold block mb-1">1. Analista Funcional</span>
+            <p class="text-slate-400">Extrae requerimientos clave, entidades del dominio y riesgos principales.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="text-purple-400 font-bold block mb-1">2. Arquitecto Datos</span>
+            <p class="text-slate-400">Diseña esquemas SQL, índices y estrategias de caché con puntuación técnica.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="text-red-400 font-bold block mb-1">3. Auditor Seguridad</span>
+            <p class="text-slate-400">Verifica OAuth2, RBAC y cumplimiento normativo (HIPAA / GDPR).</p>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="text-emerald-400 font-bold block mb-1">4. CTO Sintetizador</span>
+            <p class="text-slate-400">Consolida el Blueprint de Arquitectura final y el Roadmap de 3 fases.</p>
+          </div>
+        </div>
+
+        <div class="code-window mt-4">
+          <div class="code-header">
+            <span class="text-slate-400 font-mono text-[11px]">Terminal / Shell</span>
+            <span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Bash</span>
+          </div>
+          <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-emerald-300"><code>$ python capstone_project/system_architect_agency.py</code></pre>
+        </div>
+
+        <div class="p-3 rounded-lg bg-emerald-950/30 border border-emerald-900/50 text-xs text-emerald-300 mt-3">
+          ✓ Integra <code class="text-emerald-200">SequentialAgent</code>, <code class="text-emerald-200">ParallelAgent</code>, <code class="text-emerald-200">ToolContext</code> y persistencia de métricas en memoria.
+        </div>
+      </section>
+
+      <!-- SLIDE 16: MEJORES PRÁCTICAS Y CIERRE -->
+      <section class="slide hidden flex-col" data-title="Mejores Prácticas de Ingeniería" data-tag="PRODUCCIÓN">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">PRODUCCIÓN</span>
+            <span class="text-xs text-slate-500 font-mono">Diapositiva 16 de 16</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Mejores Prácticas de Ingeniería (ADLC)</h2>
+          <p class="text-sm text-slate-400">Directrices de producción basadas en google/agents-cli.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 text-xs">
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+            <strong class="text-blue-400 text-sm block">Optimización de Modelos Locales</strong>
+            <ul class="space-y-2 text-slate-300 list-disc list-inside leading-relaxed">
+              <li>Mantén temperaturas bajas (0.1 - 0.2) para maximizar la fidelidad en llamadas a herramientas.</li>
+              <li>Usa modelos con soporte nativo de function calling (Qwen 2.5 7B/14B).</li>
+              <li>Limpia el contexto entre fases con <code class="text-blue-300">include_contents='none'</code> si un subagente sólo necesita la última tarea.</li>
+            </ul>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+            <strong class="text-emerald-400 text-sm block">Evaluación y Observabilidad</strong>
+            <ul class="space-y-2 text-slate-300 list-disc list-inside leading-relaxed">
+              <li>Crea datasets dorados y evalúa con <code class="text-emerald-300">agents-cli eval run</code> antes de pasar a producción.</li>
+              <li>Aplica "LLM-as-a-judge" con rúbricas de grading reproducibles.</li>
+              <li>Monitorea eventos de parada y tiempos de latencia con OpenTelemetry.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="mt-8 text-center text-xs text-slate-400">
+          ¡Felicitaciones! Has completado la formación integral de <strong>Google ADK 2.0</strong>.
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- MODAL DE ÍNDICE -->
+  <div id="indexModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-slate-800 flex justify-between items-center">
+        <h3 class="font-bold text-slate-100 flex items-center gap-2">
+          <span>📑 Índice del Curso ADK 2.0</span>
+        </h3>
+        <button onclick="toggleIndexModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+      </div>
+      <div id="indexList" class="p-4 overflow-y-auto space-y-1.5">
+        <!-- Rellenado por JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 0;
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const totalSlides = slides.length;
+
+    function showSlide(index) {
+      if (index < 0) index = 0;
+      if (index >= totalSlides) index = totalSlides - 1;
+      currentSlide = index;
+
+      slides.forEach((s, idx) => {
+        if (idx === currentSlide) {
+          s.classList.remove('hidden');
+          s.classList.add('slide-active');
+        } else {
+          s.classList.add('hidden');
+          s.classList.remove('slide-active');
+        }
+      });
+
+      // Actualizar contador y barra de progreso
+      document.getElementById('slideCounter').textContent = (currentSlide + 1) + ' / ' + totalSlides;
+      const pct = ((currentSlide + 1) / totalSlides) * 100;
+      document.getElementById('progressBar').style.width = pct + '%';
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        showSlide(currentSlide + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        showSlide(currentSlide - 1);
+      }
+    }
+
+    function toggleIndexModal() {
+      const modal = document.getElementById('indexModal');
+      modal.classList.toggle('hidden');
+    }
+
+    function buildIndex() {
+      const list = document.getElementById('indexList');
+      list.innerHTML = '';
+      slides.forEach((s, idx) => {
+        const title = s.getAttribute('data-title') || ('Diapositiva ' + (idx + 1));
+        const tag = s.getAttribute('data-tag') || '';
+        const btn = document.createElement('button');
+        btn.className = 'w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-xs flex items-center justify-between transition group';
+        const numStr = (idx + 1 < 10 ? '0' : '') + (idx + 1);
+        btn.innerHTML = '<div class="flex items-center gap-2.5"><span class="font-mono text-[10px] text-slate-500 group-hover:text-blue-400">' + numStr + '</span><span class="text-slate-200 group-hover:text-white font-medium">' + title + '</span></div><span class="text-[10px] font-mono text-slate-500">' + tag + '</span>';
+        btn.onclick = function() {
+          showSlide(idx);
+          toggleIndexModal();
+        };
+        list.appendChild(btn);
+      });
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    // Atajos de teclado
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'Backspace' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key.toLowerCase() === 'm') {
+        toggleIndexModal();
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFullScreen();
+      }
+    });
+
+    // Iniciar
+    buildIndex();
+    showSlide(0);
+  </script>
+</body>
+</html>

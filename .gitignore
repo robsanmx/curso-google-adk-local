@@ -1,0 +1,38 @@
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache y bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Variables de entorno y secretos
+.env
+.env.local
+*.env
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Tests y cobertura
+.pytest_cache/
+.coverage
+htmlcov/
