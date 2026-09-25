@@ -10,7 +10,7 @@ Abre automáticamente las diapositivas interactivas en tu navegador web predeter
 import os
 import sys
 import webbrowser
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 import socket
 
 PORT = 8000
@@ -53,7 +53,7 @@ def main():
         def log_message(self, format, *args):
             pass # Silenciar logs de requests para mantener limpia la consola
 
-    server = HTTPServer(('127.0.0.1', puerto), ManejadorSilencioso)
+    server = ThreadingHTTPServer(('127.0.0.1', puerto), ManejadorSilencioso)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
