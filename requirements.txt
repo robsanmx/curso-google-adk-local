@@ -1,5 +1,5 @@
 # Dependencias del Curso de Google ADK 2.0 y agents-cli (Modo Local)
-google-adk>=2.0.0
+google-adk>=2.9.2
 litellm>=1.40.0
 pydantic>=2.7.0
 python-dotenv>=1.0.1
