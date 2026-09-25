@@ -97,7 +97,7 @@ async def main():
     )
 
     session_service = InMemorySessionService()
-    runner = Runner(agent=diagnostico_agent, session_service=session_service)
+    runner = Runner(agent=diagnostico_agent, app_name=\"diagnostico_agent_app\", session_service=session_service)
 
     session_id = "sesion_herramientas_02"
     user_id = "ops_admin"

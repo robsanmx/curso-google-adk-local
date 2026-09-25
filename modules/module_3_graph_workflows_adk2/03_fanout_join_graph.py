@@ -75,7 +75,7 @@ async def main():
     )
 
     session_service = InMemorySessionService()
-    runner = Runner(agent=grafo_fanout_join, session_service=session_service)
+    runner = Runner(agent=grafo_fanout_join, app_name=\"grafo_fanout_join_app\", session_service=session_service)
 
     session_id = "sesion_join_03"
     user_id = "infra_manager"

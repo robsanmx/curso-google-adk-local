@@ -90,7 +90,7 @@ async def main():
 
     # 6. Ejecución
     session_service = InMemorySessionService()
-    runner = Runner(agent=equipo_auditoria_completo, session_service=session_service)
+    runner = Runner(agent=equipo_auditoria_completo, app_name=\"equipo_auditoria_completo_app\", session_service=session_service)
 
     session_id = "sesion_parallel_02"
     user_id = "tech_lead"

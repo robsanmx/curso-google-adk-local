@@ -71,7 +71,7 @@ async def main():
     )
 
     session_service = InMemorySessionService()
-    runner = Runner(agent=grafo_enrutado, session_service=session_service)
+    runner = Runner(agent=grafo_enrutado, app_name=\"grafo_enrutado_app\", session_service=session_service)
 
     # Probar diferentes entradas
     casos = [

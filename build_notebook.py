@@ -158,7 +158,7 @@ asistente_dev = Agent(
 
 # 2. Configurar la sesión y el Runner
 session_service = InMemorySessionService()
-runner = Runner(agent=asistente_dev, session_service=session_service)
+runner = Runner(agent=asistente_dev, app_name=\"asistente_dev_app\", session_service=session_service)
 
 # 3. Crear sesión con variables de estado iniciales
 session = await session_service.create_session(
@@ -253,7 +253,7 @@ session_tools = await session_service.create_session(
     user_id="sysadmin",
     state={"alertas_sistema": []}
 )
-runner_tools = Runner(agent=agente_monitor, session_service=session_service)
+runner_tools = Runner(agent=agente_monitor, app_name=\"agente_monitor_app\", session_service=session_service)
 
 consulta = "Consulta el estado del hardware de este equipo y dime si está operativo."
 print(f"👤 [Usuario]: {consulta}\\n")
@@ -311,7 +311,7 @@ agente_ops = Agent(
 )
 
 session_hitl = await session_service.create_session(session_id="sesion_03_hitl", user_id="ops_lead", state={})
-runner_hitl = Runner(agent=agente_ops, session_service=session_service)
+runner_hitl = Runner(agent=agente_ops, app_name=\"agente_ops_app\", session_service=session_service)
 
 peticion = "Por favor reinicia el servicio postgresql de forma forzada."
 print(f"👤 [Usuario]: {peticion}\\n")
@@ -379,7 +379,7 @@ pipeline_secuencial = SequentialAgent(
 )
 
 session_seq = await session_service.create_session(session_id="sesion_seq", user_id="lead", state={})
-runner_seq = Runner(agent=pipeline_secuencial, session_service=session_service)
+runner_seq = Runner(agent=pipeline_secuencial, app_name=\"pipeline_secuencial_app\", session_service=session_service)
 
 input_proyecto = "Queremos un sistema para reservas de bicicletas compartidas con pago por minuto."
 print(f"📋 [Caso]: {input_proyecto}\\n")
@@ -434,7 +434,7 @@ pipeline_hibrido = SequentialAgent(
 )
 
 session_par = await session_service.create_session(session_id="sesion_par", user_id="dev", state={})
-runner_par = Runner(agent=pipeline_hibrido, session_service=session_service)
+runner_par = Runner(agent=pipeline_hibrido, app_name=\"pipeline_hibrido_app\", session_service=session_service)
 
 codigo_test = \"\"\"
 @app.route('/login', methods=['POST'])
@@ -517,7 +517,7 @@ session_loop = await session_service.create_session(
         "num_iter": 0
     }
 )
-runner_loop = Runner(agent=bucle, session_service=session_service)
+runner_loop = Runner(agent=bucle, app_name=\"bucle_app\", session_service=session_service)
 
 print("🔄 [Iniciando Bucle de Refinamiento Iterativo...]\\n")
 async for event in runner_loop.run_async(session_id=session_loop.id, user_id="dev", prompt="Optimiza Fibonacci"):
@@ -580,7 +580,7 @@ session_graph = await session_service.create_session(
     user_id="analista",
     state={"rol_usuario": "DevOps Senior L3"}
 )
-runner_graph = Runner(agent=grafo_simple, session_service=session_service)
+runner_graph = Runner(agent=grafo_simple, app_name=\"grafo_simple_app\", session_service=session_service)
 
 ticket = "CrashLoopBackOff en pod auth-service tras rotar secrets."
 print(f"🎫 [Ticket]: {ticket}\\n")
@@ -622,7 +622,7 @@ grafo_dinamico = Workflow(
 )
 
 session_router = await session_service.create_session(session_id="sesion_router", user_id="dev", state={})
-runner_router = Runner(agent=grafo_dinamico, session_service=session_service)
+runner_router = Runner(agent=grafo_dinamico, app_name=\"grafo_dinamico_app\", session_service=session_service)
 
 test_prompt = "Detectamos una vulnerabilidad de inyección SQL con fuga de tokens de sesión."
 print(f"🚨 [Consulta]: {test_prompt}\\n")
@@ -665,7 +665,7 @@ grafo_join = Workflow(
 )
 
 session_join = await session_service.create_session(session_id="sesion_join", user_id="cto", state={})
-runner_join = Runner(agent=grafo_join, session_service=session_service)
+runner_join = Runner(agent=grafo_join, app_name=\"grafo_join_app\", session_service=session_service)
 
 req_infra = "Despliegue de un microservicio de pagos con 2,000 transacciones concurrentes por minuto."
 print(f"🏗️ [Requerimiento de Infraestructura]: {req_infra}\\n")
@@ -707,7 +707,7 @@ coordinador = Agent(
 )
 
 session_at = await session_service.create_session(session_id="sesion_agent_tool", user_id="dev", state={})
-runner_at = Runner(agent=coordinador, session_service=session_service)
+runner_at = Runner(agent=coordinador, app_name=\"coordinador_app\", session_service=session_service)
 
 pregunta_cripto = "Queremos almacenar contraseñas en MySQL usando MD5 con salt. ¿Es buena idea?"
 print(f"👤 [Usuario]: {pregunta_cripto}\\n")
@@ -760,7 +760,7 @@ coordinador_release = Agent(
 )
 
 session_task = await session_service.create_session(session_id="sesion_task_mode", user_id="lead", state={})
-runner_task = Runner(agent=coordinador_release, session_service=session_service)
+runner_task = Runner(agent=coordinador_release, app_name=\"coordinador_release_app\", session_service=session_service)
 
 propuesta = "Lanzamiento de API de facturación: Se guarda el token de pago en logs en texto claro para depuración."
 print(f"📦 [Propuesta de Release]: {propuesta}\\n")
@@ -855,7 +855,7 @@ session_capstone = await session_service.create_session(
     user_id="founder",
     state={"scores_calidad": {}}
 )
-runner_capstone = Runner(agent=agencia, session_service=session_service)
+runner_capstone = Runner(agent=agencia, app_name=\"agencia_app\", session_service=session_service)
 
 caso_telemedicina = \"\"\"
 Plataforma de telemedicina con videollamadas encriptadas de extremo a extremo,

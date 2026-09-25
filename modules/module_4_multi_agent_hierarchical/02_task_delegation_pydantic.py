@@ -69,7 +69,7 @@ async def main():
     )
 
     session_service = InMemorySessionService()
-    runner = Runner(agent=coordinador, session_service=session_service)
+    runner = Runner(agent=coordinador, app_name=\"coordinador_app\", session_service=session_service)
 
     session_id = "sesion_task_delegation_02"
     user_id = "devops_lead"

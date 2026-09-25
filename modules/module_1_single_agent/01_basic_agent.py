@@ -43,7 +43,7 @@ async def main():
 
     # 3. Configurar el servicio de sesiones en memoria y el Runner
     session_service = InMemorySessionService()
-    runner = Runner(agent=asistente, session_service=session_service)
+    runner = Runner(agent=asistente, app_name=\"asistente_app\", session_service=session_service)
 
     # 4. Crear una sesión con estado inicial
     session_id = "sesion_demo_01"

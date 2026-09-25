@@ -152,7 +152,7 @@ async def main():
 
     agencia = construir_agencia_arquitectura(local_model)
     session_service = InMemorySessionService()
-    runner = Runner(agent=agencia, session_service=session_service)
+    runner = Runner(agent=agencia, app_name=\"agencia_app\", session_service=session_service)
 
     session_id = "capstone_agency_run_01"
     user_id = "founder_roberto"

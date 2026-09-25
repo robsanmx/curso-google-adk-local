@@ -78,7 +78,7 @@ async def main():
 
     # 5. Ejecución con Runner
     session_service = InMemorySessionService()
-    runner = Runner(agent=pipeline_secuencial, session_service=session_service)
+    runner = Runner(agent=pipeline_secuencial, app_name=\"pipeline_secuencial_app\", session_service=session_service)
 
     session_id = "sesion_seq_01"
     user_id = "product_owner"
