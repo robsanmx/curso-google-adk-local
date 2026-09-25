@@ -122,8 +122,10 @@ def get_local_model(provider="ollama", model_name=None, temperature=0.2):
 
 # Inicializamos el modelo para todo el notebook (puedes cambiar 'ollama' por 'lmstudio' o 'mlx')
 local_model = get_local_model(provider="ollama", model_name="qwen2.5:7b-instruct")
-print(f"✓ Modelo local configurado: {local_model.model} en {local_model.api_base}")
-"""))
+endpoint = getattr(local_model, "_additional_args", {}).get("api_base", "default")
+print(f"✓ Modelo local configurado: {local_model.model} (endpoint: {endpoint})")
+"""
+))
 
     # -------------------------------------------------------------
     # SECCIÓN 2: SINGLE AGENT
