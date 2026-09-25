@@ -15,6 +15,7 @@ En este ejemplo implementamos:
 import asyncio
 from typing import AsyncGenerator
 from google.adk.agents import Agent, BaseAgent, LoopAgent
+from google.genai import types
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event, EventActions
 from google.adk.runners import Runner
@@ -99,7 +100,7 @@ async def main():
     )
 
     session_service = InMemorySessionService()
-    runner = Runner(agent=bucle_refinamiento, app_name=\"bucle_refinamiento_app\", session_service=session_service)
+    runner = Runner(agent=bucle_refinamiento, app_name="default_app", session_service=session_service)
 
     session_id = "sesion_loop_03"
     user_id = "ingeniero"
@@ -115,7 +116,7 @@ async def main():
     )
 
     print("[*] Iniciando LoopAgent de refinamiento iterativo...")
-    async for event in runner.run_async(session_id=session.id, user_id=user_id, prompt="Optimiza la función fibonacci"):
+    async for event in runner.run_async(session_id=session.id, user_id=user_id, new_message=types.Content(role="user", parts=[types.Part.from_text(text="Optimiza la función fibonacci")])):
         if event.author and event.author != "verificador_parada":
             print(f"\n>> [{event.author}]:")
             if event.content:

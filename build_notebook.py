@@ -105,7 +105,14 @@ def extraer_texto(event) -> str:
             return "\\n".join(tool_responses)
     return ''
 
-print("✓ nest_asyncio, filtros de warnings y utilidades configurados correctamente.")
+from google.genai import types
+
+def user_msg(texto: str) -> types.Content:
+    # Crea el objeto types.Content canonico exigido por Google ADK runner.run_async(new_message=...)
+    # Garantiza compatibilidad universal con todas las versiones de Google ADK.
+    return types.Content(role="user", parts=[types.Part.from_text(text=str(texto))])
+
+print("✓ nest_asyncio, utilidades y helper user_msg(types.Content) configurados correctamente.")
 """))
 
     # -------------------------------------------------------------
@@ -227,7 +234,7 @@ prompt = "¿Cuáles son las ventajas de ejecutar agentes con ADK 2.0 en local?"
 print(f"👤 [Usuario]: {prompt}\\n")
 print("🤖 [Agente]:")
 
-async for event in runner.run_async(session_id=session.id, user_id="roberto", prompt=prompt):
+async for event in runner.run_async(session_id=session.id, user_id="roberto", new_message=user_msg(prompt)):
     text = extraer_texto(event)
     if text:
         print(text)
@@ -354,7 +361,7 @@ runner_tools = Runner(agent=agente_monitor, app_name="agente_monitor_app", sessi
 consulta = "Consulta el estado del hardware de este equipo y dime si está operativo."
 print(f"👤 [Usuario]: {consulta}\\n")
 
-async for event in runner_tools.run_async(session_id=session_tools.id, user_id="sysadmin", prompt=consulta):
+async for event in runner_tools.run_async(session_id=session_tools.id, user_id="sysadmin", new_message=user_msg(consulta)):
     text = extraer_texto(event)
     if text:
         print(f"{text}\\n")
@@ -565,7 +572,7 @@ runner_seq = Runner(agent=pipeline_secuencial, app_name="pipeline_secuencial_app
 input_proyecto = "Queremos un sistema para reservas de bicicletas compartidas con pago por minuto."
 print(f"📋 [Caso]: {input_proyecto}\\n")
 
-async for event in runner_seq.run_async(session_id=session_seq.id, user_id="lead", prompt=input_proyecto):
+async for event in runner_seq.run_async(session_id=session_seq.id, user_id="lead", new_message=user_msg(input_proyecto)):
     if event.author:
         print(f"👉 [Turno de: {event.author}]")
     text = extraer_texto(event)
@@ -669,7 +676,7 @@ def login():
 \"\"\"
 
 print("⚡ [Iniciando análisis concurrente de seguridad y rendimiento...]\\n")
-async for event in runner_par.run_async(session_id=session_par.id, user_id="dev", prompt=codigo_test):
+async for event in runner_par.run_async(session_id=session_par.id, user_id="dev", new_message=user_msg(codigo_test)):
     if event.author:
         print(f">> [Evento de: {event.author}]")
     text = extraer_texto(event)
@@ -788,7 +795,7 @@ session_loop = await session_service.create_session(
 runner_loop = Runner(agent=bucle, app_name="bucle_app", session_service=session_service)
 
 print("🔄 [Iniciando Bucle de Refinamiento Iterativo...]\\n")
-async for event in runner_loop.run_async(session_id=session_loop.id, user_id="dev", prompt="Optimiza Fibonacci"):
+async for event in runner_loop.run_async(session_id=session_loop.id, user_id="dev", new_message=user_msg("Optimiza Fibonacci")):
     if event.author and event.author != "stop_checker":
         print(f"[{event.author}]:")
         text = extraer_texto(event)
@@ -898,7 +905,7 @@ runner_graph = Runner(agent=grafo_simple, app_name="grafo_simple_app", session_s
 ticket = "CrashLoopBackOff en pod auth-service tras rotar secrets."
 print(f"🎫 [Ticket]: {ticket}\\n")
 
-async for event in runner_graph.run_async(session_id=session_graph.id, user_id="analista", prompt=ticket):
+async for event in runner_graph.run_async(session_id=session_graph.id, user_id="analista", new_message=user_msg(ticket)):
     if event.author:
         print(f">> [Nodo Activo: {event.author}]")
     text = extraer_texto(event)
@@ -942,7 +949,7 @@ runner_router = Runner(agent=grafo_dinamico, app_name="grafo_dinamico_app", sess
 test_prompt = "Detectamos una vulnerabilidad de inyección SQL con fuga de tokens de sesión."
 print(f"🚨 [Consulta]: {test_prompt}\\n")
 
-async for event in runner_router.run_async(session_id=session_router.id, user_id="dev", prompt=test_prompt):
+async for event in runner_router.run_async(session_id=session_router.id, user_id="dev", new_message=user_msg(test_prompt)):
     if event.author:
         print(f"🎯 [Rama Activada: {event.author}]")
     text = extraer_texto(event)
@@ -985,7 +992,7 @@ runner_join = Runner(agent=grafo_join, app_name="grafo_join_app", session_servic
 req_infra = "Despliegue de un microservicio de pagos con 2,000 transacciones concurrentes por minuto."
 print(f"🏗️ [Requerimiento de Infraestructura]: {req_infra}\\n")
 
-async for event in runner_join.run_async(session_id=session_join.id, user_id="cto", prompt=req_infra):
+async for event in runner_join.run_async(session_id=session_join.id, user_id="cto", new_message=user_msg(req_infra)):
     if event.author:
         print(f">> [Evento de: {event.author}]")
     text = extraer_texto(event)
@@ -1071,7 +1078,7 @@ runner_at = Runner(agent=coordinador, app_name="coordinador_app", session_servic
 pregunta_cripto = "Queremos almacenar contraseñas en MySQL usando MD5 con salt. ¿Es buena idea?"
 print(f"👤 [Usuario]: {pregunta_cripto}\\n")
 
-async for event in runner_at.run_async(session_id=session_at.id, user_id="dev", prompt=pregunta_cripto):
+async for event in runner_at.run_async(session_id=session_at.id, user_id="dev", new_message=user_msg(pregunta_cripto)):
     if event.author:
         print(f">> [Evento de: {event.author}]")
     text = extraer_texto(event)
@@ -1179,7 +1186,7 @@ runner_task = Runner(agent=coordinador_release, app_name="coordinador_release_ap
 propuesta = "Lanzamiento de API de facturación: Se guarda el token de pago en logs en texto claro para depuración."
 print(f"📦 [Propuesta de Release]: {propuesta}\\n")
 
-async for event in runner_task.run_async(session_id=session_task.id, user_id="lead", prompt=propuesta):
+async for event in runner_task.run_async(session_id=session_task.id, user_id="lead", new_message=user_msg(propuesta)):
     if event.author:
         print(f">> [Evento de: {event.author}]")
     text = extraer_texto(event)
@@ -1321,7 +1328,7 @@ recetas médicas firmadas digitalmente y cobros recurrentes para 50,000 paciente
 \"\"\"
 
 print("🏢 [INICIANDO EJECUCIÓN DE LA AGENCIA MULTI-AGENTE CAPSTONE]\\n")
-async for event in runner_capstone.run_async(session_id=session_capstone.id, user_id="founder", prompt=caso_telemedicina):
+async for event in runner_capstone.run_async(session_id=session_capstone.id, user_id="founder", new_message=user_msg(caso_telemedicina)):
     if event.author:
         print(f"⭐ [FASE: {event.author.upper()}]")
     text = extraer_texto(event)
@@ -1529,7 +1536,7 @@ async def probar_agente(nombre_agente: str, prompt: str):
     
     print(f"\\n--- Ejecutando prueba de '{nombre_agente}' en local ---")
     print(f"💬 Prompt: '{prompt}'\\n")
-    async for event in runner.run_async(session_id=sess.id, user_id="tester", prompt=prompt):
+    async for event in runner.run_async(session_id=sess.id, user_id="tester", new_message=user_msg(prompt)):
         if event.author:
             print(f">> [Evento de: {event.author}]")
         txt = extraer_texto(event)

@@ -226,9 +226,11 @@ token = session.state.get(<span class="text-emerald-300">"auth_token"</span>)</c
             <div class="text-xs font-mono text-amber-400 font-semibold mb-1">4. Runner & Events</div>
             <p class="text-xs text-slate-300 mb-3">El Runner orquesta el ciclo de vida emitiendo eventos asíncronos atómicos (<code class="text-amber-300">Event</code>) para trazabilidad total.</p>
             <div class="code-window">
-              <pre class="p-3 text-[11px] font-mono text-slate-300 overflow-x-auto leading-relaxed"><code><span class="text-purple-400">async for</span> event <span class="text-purple-400">in</span> runner.run_async(
+              <pre class="p-3 text-[11px] font-mono text-slate-300 overflow-x-auto leading-relaxed"><code><span class="text-slate-500"># Mensaje canónico types.Content</span>
+msg = types.Content(role=<span class="text-emerald-300">"user"</span>, parts=[types.Part.from_text(text=<span class="text-emerald-300">"¿Cómo optimizo?"</span>)])
+<span class="text-purple-400">async for</span> event <span class="text-purple-400">in</span> runner.run_async(
     session_id=session.id,
-    prompt=<span class="text-emerald-300">"¿Cómo optimizo esta query?"</span>
+    new_message=msg
 ):
     <span class="text-purple-400">print</span>(event.content)</code></pre>
             </div>

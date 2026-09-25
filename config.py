@@ -30,9 +30,22 @@ def get_local_model(
     provider = (provider or os.getenv("LOCAL_LLM_PROVIDER", "ollama")).lower()
     
     if provider == "ollama":
-        target_model = model_name or os.getenv("OLLAMA_MODEL", "qwen2.5:7b-instruct")
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        # Para LiteLLM, los modelos de chat de Ollama usan el prefijo ollama_chat/
+        target_model = model_name or os.getenv("OLLAMA_MODEL")
+        if not target_model:
+            try:
+                import urllib.request, json
+                with urllib.request.urlopen(f"{base_url}/api/tags", timeout=1.5) as r:
+                    models = [m["name"] for m in json.loads(r.read().decode()).get("models", [])]
+                    for preferred in ["llama3.2:latest", "llama3.2", "llama3.1:8b", "qwen2.5:7b-instruct", "qwen2.5:7b", "mistral-nemo:latest", "qwen3:4b"]:
+                        if preferred in models:
+                            target_model = preferred
+                            break
+                    if not target_model and models:
+                        target_model = models[0]
+            except Exception:
+                pass
+        target_model = target_model or "llama3.2:latest"
         lite_model_str = f"ollama_chat/{target_model}" if not target_model.startswith("ollama_chat/") else target_model
         
         return LiteLlm(

@@ -12,6 +12,7 @@ Mecanismo:
 
 import asyncio
 from google.adk.workflow import Workflow
+from google.genai import types
 from google.adk.events.event import Event
 from google.adk.agents import Agent
 from google.adk.runners import Runner
@@ -71,7 +72,7 @@ async def main():
     )
 
     session_service = InMemorySessionService()
-    runner = Runner(agent=grafo_enrutado, app_name=\"grafo_enrutado_app\", session_service=session_service)
+    runner = Runner(agent=grafo_enrutado, app_name="default_app", session_service=session_service)
 
     # Probar diferentes entradas
     casos = [
@@ -81,10 +82,10 @@ async def main():
 
     for sid, prompt in casos:
         print("\n" + "=" * 65)
-        print(f"[*] EJECUTANDO PROMPT: \"{prompt}\"")
+        print(f"[*] EJECUTANDO PROMPT: '{prompt}'")
         session = await session_service.create_session(session_id=sid, user_id="dev", state={})
         
-        async for event in runner.run_async(session_id=session.id, user_id="dev", prompt=prompt):
+        async for event in runner.run_async(session_id=session.id, user_id="dev", new_message=types.Content(role="user", parts=[types.Part.from_text(text=prompt)])):
             if event.author:
                 print(f">> [Activado nodo: {event.author}]")
             if event.content:

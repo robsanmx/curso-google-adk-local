@@ -12,6 +12,7 @@ El estado (`state`) fluye de uno a otro mediante `output_key`.
 
 import asyncio
 from google.adk.agents import Agent, SequentialAgent
+from google.genai import types
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from config import get_local_model, print_environment_banner
@@ -78,7 +79,7 @@ async def main():
 
     # 5. Ejecución con Runner
     session_service = InMemorySessionService()
-    runner = Runner(agent=pipeline_secuencial, app_name=\"pipeline_secuencial_app\", session_service=session_service)
+    runner = Runner(agent=pipeline_secuencial, app_name="default_app", session_service=session_service)
 
     session_id = "sesion_seq_01"
     user_id = "product_owner"
@@ -93,7 +94,7 @@ async def main():
     print(f"[Solicitud de Entrada]:\n{input_caso}\n")
     print("[*] Iniciando ejecución secuencial de agentes en cadena...\n")
 
-    async for event in runner.run_async(session_id=session.id, user_id=user_id, prompt=input_caso):
+    async for event in runner.run_async(session_id=session.id, user_id=user_id, new_message=types.Content(role="user", parts=[types.Part.from_text(text=input_caso)])):
         if event.author:
             print(f"\n>> [Turno de Agente: {event.author}]")
         if event.content:

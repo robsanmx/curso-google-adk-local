@@ -15,6 +15,7 @@ import asyncio
 from typing import List, Literal
 from pydantic import BaseModel, Field
 from google.adk.agents import Agent
+from google.genai import types
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from config import get_local_model, print_environment_banner
@@ -69,7 +70,7 @@ async def main():
     )
 
     session_service = InMemorySessionService()
-    runner = Runner(agent=coordinador, app_name=\"coordinador_app\", session_service=session_service)
+    runner = Runner(agent=coordinador, app_name="default_app", session_service=session_service)
 
     session_id = "sesion_task_delegation_02"
     user_id = "devops_lead"
@@ -85,7 +86,7 @@ async def main():
     print(f"[Propuesta de Despliegue recibida]:\n{propuesta_despliegue}\n")
     print("[*] Iniciando Coordinador con Task Delegation tipada...")
 
-    async for event in runner.run_async(session_id=session.id, user_id=user_id, prompt=propuesta_despliegue):
+    async for event in runner.run_async(session_id=session.id, user_id=user_id, new_message=types.Content(role="user", parts=[types.Part.from_text(text=propuesta_despliegue)])):
         if event.author:
             print(f">> [Evento de: {event.author}]")
         if event.content:

@@ -12,6 +12,7 @@ Google ADK proporciona soporte de primer nivel con:
 
 import asyncio
 from google.adk.agents import Agent
+from google.genai import types
 from google.adk.tools import FunctionTool, ToolContext
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -69,7 +70,7 @@ async def main():
     )
 
     session_service = InMemorySessionService()
-    runner = Runner(agent=ops_agent, app_name=\"ops_agent_app\", session_service=session_service)
+    runner = Runner(agent=ops_agent, app_name="default_app", session_service=session_service)
 
     session_id = "sesion_hitl_03"
     user_id = "security_officer"
@@ -84,7 +85,7 @@ async def main():
     print(f"[Usuario]: {solicitud}\n")
 
     print("[*] Iniciando ejecución. Observa cómo el motor de ADK detecta la necesidad de confirmación:")
-    async for event in runner.run_async(session_id=session.id, user_id=user_id, prompt=solicitud):
+    async for event in runner.run_async(session_id=session.id, user_id=user_id, new_message=types.Content(role="user", parts=[types.Part.from_text(text=solicitud)])):
         # Si el evento requiere confirmación de tool, el runner emitirá una señal
         if hasattr(event, "actions") and event.actions:
             print(f" -> Evento de acción detectado: {event.actions}")

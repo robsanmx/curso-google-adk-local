@@ -12,6 +12,7 @@ causando condiciones de carrera (race conditions).
 
 import asyncio
 from google.adk.agents import Agent, ParallelAgent, SequentialAgent
+from google.genai import types
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from config import get_local_model, print_environment_banner
@@ -90,7 +91,7 @@ async def main():
 
     # 6. Ejecución
     session_service = InMemorySessionService()
-    runner = Runner(agent=equipo_auditoria_completo, app_name=\"equipo_auditoria_completo_app\", session_service=session_service)
+    runner = Runner(agent=equipo_auditoria_completo, app_name="default_app", session_service=session_service)
 
     session_id = "sesion_parallel_02"
     user_id = "tech_lead"
@@ -113,7 +114,7 @@ async def main():
     print(f"[Código a evaluar en paralelo]:\n{codigo_muestra}\n")
     print("[*] Disparando análisis paralelo con 3 agentes concurrentes...\n")
 
-    async for event in runner.run_async(session_id=session.id, user_id=user_id, prompt=codigo_muestra):
+    async for event in runner.run_async(session_id=session.id, user_id=user_id, new_message=types.Content(role="user", parts=[types.Part.from_text(text=codigo_muestra)])):
         if event.author:
             print(f">> [Evento de: {event.author}]")
         if event.content:

@@ -15,6 +15,7 @@ robusta y ejecutable 100% de manera local:
 
 import asyncio
 from google.adk.agents import Agent, ParallelAgent, SequentialAgent
+from google.genai import types
 from google.adk.tools import ToolContext
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -152,7 +153,7 @@ async def main():
 
     agencia = construir_agencia_arquitectura(local_model)
     session_service = InMemorySessionService()
-    runner = Runner(agent=agencia, app_name=\"agencia_app\", session_service=session_service)
+    runner = Runner(agent=agencia, app_name="default_app", session_service=session_service)
 
     session_id = "capstone_agency_run_01"
     user_id = "founder_roberto"
@@ -176,7 +177,7 @@ async def main():
     print("=" * 70)
     print(f"[Caso de Negocio]:\n{caso_estudio.strip()}\n")
 
-    async for event in runner.run_async(session_id=session.id, user_id=user_id, prompt=caso_estudio):
+    async for event in runner.run_async(session_id=session.id, user_id=user_id, new_message=types.Content(role="user", parts=[types.Part.from_text(text=caso_estudio)])):
         if event.author:
             print(f"\n>> -----------------------------------------------------------")
             print(f">> [FASE ACTIVA: {event.author.upper()}]")

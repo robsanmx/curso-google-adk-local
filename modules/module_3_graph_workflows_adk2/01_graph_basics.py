@@ -16,6 +16,7 @@ Conceptos esenciales de ADK 2.0 Workflows:
 
 import asyncio
 from google.adk.workflow import Workflow
+from google.genai import types
 from google.adk.agents import Agent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -68,7 +69,7 @@ async def main():
     )
 
     session_service = InMemorySessionService()
-    runner = Runner(agent=grafo_soporte, app_name=\"grafo_soporte_app\", session_service=session_service)
+    runner = Runner(agent=grafo_soporte, app_name="default_app", session_service=session_service)
 
     session_id = "sesion_graph_01"
     user_id = "usuario_soporte"
@@ -85,7 +86,7 @@ async def main():
     print(f"[Ticket recibido]:\n{ticket}\n")
     print("[*] Ejecutando grafo en ADK 2.0...")
 
-    async for event in runner.run_async(session_id=session.id, user_id=user_id, prompt=ticket):
+    async for event in runner.run_async(session_id=session.id, user_id=user_id, new_message=types.Content(role="user", parts=[types.Part.from_text(text=ticket)])):
         if event.author:
             print(f">> [Evento de Nodo: {event.author}]")
         if event.content:

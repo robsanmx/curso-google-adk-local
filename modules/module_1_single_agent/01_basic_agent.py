@@ -12,6 +12,7 @@ Conceptos clave:
 
 import asyncio
 from google.adk.agents import Agent
+from google.genai import types
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from config import get_local_model, print_environment_banner
@@ -43,7 +44,7 @@ async def main():
 
     # 3. Configurar el servicio de sesiones en memoria y el Runner
     session_service = InMemorySessionService()
-    runner = Runner(agent=asistente, app_name=\"asistente_app\", session_service=session_service)
+    runner = Runner(agent=asistente, app_name="default_app", session_service=session_service)
 
     # 4. Crear una sesión con estado inicial
     session_id = "sesion_demo_01"
@@ -67,7 +68,7 @@ async def main():
 
     # Ejecutar el agente y escuchar los eventos generados
     print("[Agente pensando...]:")
-    async for event in runner.run_async(session_id=session.id, user_id=user_id, prompt=prompt_usuario):
+    async for event in runner.run_async(session_id=session.id, user_id=user_id, new_message=types.Content(role="user", parts=[types.Part.from_text(text=prompt_usuario)])):
         # Cada evento representa un paso en el ciclo de vida del agente
         if event.content:
             # Imprimir el contenido devuelto por el modelo

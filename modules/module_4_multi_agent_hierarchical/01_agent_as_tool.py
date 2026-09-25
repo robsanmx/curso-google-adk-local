@@ -14,6 +14,7 @@ En el patrón "Agent as a Tool" (`AgentTool`):
 
 import asyncio
 from google.adk.agents import Agent
+from google.genai import types
 from google.adk.tools import AgentTool
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -55,7 +56,7 @@ async def main():
     )
 
     session_service = InMemorySessionService()
-    runner = Runner(agent=coordinador, app_name=\"coordinador_app\", session_service=session_service)
+    runner = Runner(agent=coordinador, app_name="default_app", session_service=session_service)
 
     session_id = "sesion_agent_tool_01"
     user_id = "dev_lead"
@@ -66,7 +67,7 @@ async def main():
     print(f"[Usuario]: {consulta}\n")
     print("[*] Ejecutando Agente Coordinador con AgentTool...")
 
-    async for event in runner.run_async(session_id=session.id, user_id=user_id, prompt=consulta):
+    async for event in runner.run_async(session_id=session.id, user_id=user_id, new_message=types.Content(role="user", parts=[types.Part.from_text(text=consulta)])):
         if event.author:
             print(f">> [Evento de: {event.author}]")
         if event.content:

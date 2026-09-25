@@ -15,6 +15,7 @@ import asyncio
 import platform
 import psutil
 from google.adk.agents import Agent
+from google.genai import types
 from google.adk.tools import ToolContext
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -97,7 +98,7 @@ async def main():
     )
 
     session_service = InMemorySessionService()
-    runner = Runner(agent=diagnostico_agent, app_name=\"diagnostico_agent_app\", session_service=session_service)
+    runner = Runner(agent=diagnostico_agent, app_name="default_app", session_service=session_service)
 
     session_id = "sesion_herramientas_02"
     user_id = "ops_admin"
@@ -114,7 +115,7 @@ async def main():
     consulta = "Revisa el estado de la máquina local y dime cómo están los recursos del sistema."
     print(f"[Usuario]: {consulta}\n")
 
-    async for event in runner.run_async(session_id=session.id, user_id=user_id, prompt=consulta):
+    async for event in runner.run_async(session_id=session.id, user_id=user_id, new_message=types.Content(role="user", parts=[types.Part.from_text(text=consulta)])):
         # Inspeccionar si el evento contiene una llamada a tool o respuesta
         if hasattr(event, "actions") and event.actions:
             print(f" -> [Acción de Agente/Tool]: {event.actions}")

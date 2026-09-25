@@ -13,6 +13,7 @@ ADK 2.0 proporciona `JoinNode`:
 
 import asyncio
 from google.adk.workflow import Workflow, JoinNode
+from google.genai import types
 from google.adk.agents import Agent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -75,7 +76,7 @@ async def main():
     )
 
     session_service = InMemorySessionService()
-    runner = Runner(agent=grafo_fanout_join, app_name=\"grafo_fanout_join_app\", session_service=session_service)
+    runner = Runner(agent=grafo_fanout_join, app_name="default_app", session_service=session_service)
 
     session_id = "sesion_join_03"
     user_id = "infra_manager"
@@ -86,7 +87,7 @@ async def main():
     print(f"[Proyecto a evaluar]:\n{solicitud}\n")
     print("[*] Ejecutando Grafo con Fan-Out y Fan-In...")
 
-    async for event in runner.run_async(session_id=session.id, user_id=user_id, prompt=solicitud):
+    async for event in runner.run_async(session_id=session.id, user_id=user_id, new_message=types.Content(role="user", parts=[types.Part.from_text(text=solicitud)])):
         if event.author:
             print(f">> [Evento de: {event.author}]")
         if event.content:
