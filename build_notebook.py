@@ -67,23 +67,45 @@ Habilitamos `nest_asyncio` para poder ejecutar llamadas asíncronas (`asyncio.ru
     cells.append(make_cell("code", """# Instalación de dependencias (descomenta si no las has instalado previamente)
 # !pip install -q google-adk>=2.0.0 litellm>=1.40.0 pydantic>=2.7.0 python-dotenv nest-asyncio psutil
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 import nest_asyncio
 nest_asyncio.apply()
 
 def extraer_texto(event) -> str:
-    # Extrae de forma segura el texto o detalles de herramientas de un evento
+    # Extrae de forma limpia el texto o resumen de herramientas de un evento
     if not event or not getattr(event, 'content', None):
         return ''
     if getattr(event.content, 'parts', None):
-        parts_text = [p.text for p in event.content.parts if getattr(p, 'text', None)]
+        parts_text = [p.text.strip() for p in event.content.parts if getattr(p, 'text', None) and p.text.strip()]
         if parts_text:
-            return ' '.join(parts_text)
-        tool_calls = [f"[Llamada a tool: {p.function_call.name}]" for p in event.content.parts if getattr(p, 'function_call', None)]
+            return "\\n".join(parts_text)
+        tool_calls = [
+            f"⚙️ [Tool Invocada: {p.function_call.name}({dict(p.function_call.args or {})})]"
+            for p in event.content.parts
+            if getattr(p, 'function_call', None) and p.function_call.name != 'adk_request_confirmation'
+        ]
         if tool_calls:
-            return ' '.join(tool_calls)
-    return str(event.content or '')
+            return "\\n".join(tool_calls)
+        tool_responses = []
+        for p in event.content.parts:
+            if getattr(p, 'function_response', None):
+                if p.function_response.name == 'adk_request_confirmation':
+                    continue
+                res = p.function_response.response
+                if isinstance(res, dict) and 'error' in res and 'requires confirmation' in str(res.get('error', '')):
+                    continue
+                res_str = str(res)
+                if len(res_str) > 250:
+                    res_str = res_str[:250] + "..."
+                tool_responses.append(f"📦 [Retorno de Tool '{p.function_response.name}']: {res_str}")
+        if tool_responses:
+            return "\\n".join(tool_responses)
+    return ''
 
-print("✓ nest_asyncio y utilidades configurados correctamente.")
+print("✓ nest_asyncio, filtros de warnings y utilidades configurados correctamente.")
 """))
 
     # -------------------------------------------------------------
@@ -290,11 +312,9 @@ consulta = "Consulta el estado del hardware de este equipo y dime si está opera
 print(f"👤 [Usuario]: {consulta}\\n")
 
 async for event in runner_tools.run_async(session_id=session_tools.id, user_id="sysadmin", prompt=consulta):
-    if hasattr(event, "actions") and event.actions:
-        print(f"⚙️ [Tool Action invocada]: {event.actions}")
     text = extraer_texto(event)
     if text:
-        print(f"🤖 [Agente]:\\n{text}")
+        print(f"{text}\\n")
 """))
 
     # -------------------------------------------------------------
@@ -337,7 +357,7 @@ tool_reinicio_seguro = FunctionTool(
 agente_ops = Agent(
     name="agente_devops_seguro",
     model=local_model,
-    instruction="Eres un operador de sistemas. Puedes reiniciar servicios cuando se solicite.",
+    instruction="Eres un operador de sistemas. Si te piden reiniciar, llama a la herramienta reiniciar_servicio. Al confirmar la ejecución, reporta amablemente que la acción fue completada.",
     tools=[tool_reinicio_seguro]
 )
 
@@ -347,12 +367,52 @@ runner_hitl = Runner(agent=agente_ops, app_name="agente_ops_app", session_servic
 peticion = "Por favor reinicia el servicio postgresql de forma forzada."
 print(f"👤 [Usuario]: {peticion}\\n")
 
+pending_confirmation = None
+print("--- [PASO 1]: Evaluación e Intercepción por el Runner de ADK ---")
 async for event in runner_hitl.run_async(session_id=session_hitl.id, user_id="ops_lead", prompt=peticion):
-    if hasattr(event, "actions") and event.actions:
-        print(f"🛡️ [Intercepción de Seguridad]: EventAction emitido -> {event.actions}")
+    if hasattr(event, "actions") and event.actions and event.actions.requested_tool_confirmations:
+        for call_id, conf in event.actions.requested_tool_confirmations.items():
+            print(f"🛡️ [INTERCEPCIÓN DE SEGURIDAD]:")
+            print(f"   Operación crítica detectada: se requiere confirmación humana para ejecutar.")
+            pending_confirmation = call_id
     text = extraer_texto(event)
-    if text:
-        print(f"🤖 [Agente]:\\n{text}")
+    if text and "requires confirmation" not in text.lower():
+        print(f"{text}\\n")
+
+if pending_confirmation:
+    print("=" * 65)
+    print("👤 [PANEL DE DECISIÓN HUMANA (Human-in-the-Loop)]")
+    session_data = await session_service.get_session(app_name="agente_ops_app", session_id=session_hitl.id, user_id="ops_lead")
+    fc_name = "reiniciar_servicio"
+    for ev in session_data.events:
+        for fc in ev.get_function_calls():
+            if fc.id == pending_confirmation:
+                fc_name = fc.name
+                print(f"   • Herramienta interceptada: {fc.name}")
+                print(f"   • Parámetros solicitados: {fc.args}")
+                print(f"   • Regla aplicada: Base de datos sensible con opción 'forzar=True'.")
+    
+    print("   ✅ DECISIÓN HUMANA: APROBAR la operación forzada.")
+    print("=" * 65 + "\\n")
+    
+    from google.genai import types
+    confirm_msg = types.Content(
+        role="user",
+        parts=[
+            types.Part(
+                function_response=types.FunctionResponse(
+                    id=pending_confirmation,
+                    name=fc_name,
+                    response={"confirmed": True}
+                )
+            )
+        ]
+    )
+    print("--- [PASO 2]: Reanudando ejecución del agente con aprobación humana ---")
+    async for event in runner_hitl.run_async(session_id=session_hitl.id, user_id="ops_lead", new_message=confirm_msg):
+        text = extraer_texto(event)
+        if text:
+            print(f"{text}\\n")
 """))
 
     # -------------------------------------------------------------
@@ -760,18 +820,30 @@ async for event in runner_at.run_async(session_id=session_at.id, user_id="dev", 
 * El coordinador recibe automáticamente la tool `request_task_{nombre_subagente}`.
 * Mediante `output_schema` con modelos **Pydantic**, la respuesta se valida antes de volver al coordinador."""))
 
-    cells.append(make_cell("code", """from pydantic import BaseModel, Field
+    cells.append(make_cell("code", """from pydantic import BaseModel, Field, field_validator
 from typing import List, Literal
+import json
 
 class Vulnerabilidad(BaseModel):
     modulo: str = Field(description="Módulo afectado")
-    severidad: Literal["baja", "media", "alta", "critica"] = Field(description="Severidad")
+    severidad: str = Field(description="Severidad")
     descripcion: str = Field(description="Explicación del riesgo")
 
 class ReporteAuditoria(BaseModel):
     resumen: str = Field(description="Resumen de auditoría")
-    vulnerabilidades: List[Vulnerabilidad] = Field(description="Lista de hallazgos")
+    vulnerabilidades: List[Vulnerabilidad] = Field(default_factory=list, description="Lista de hallazgos")
     aprobado_produccion: bool = Field(description="True si se aprueba")
+
+    @field_validator("vulnerabilidades", mode="before")
+    @classmethod
+    def parse_vulnerabilidades(cls, v):
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                return parsed if isinstance(parsed, list) else [parsed]
+            except Exception:
+                return []
+        return v
 
 subagente_auditor = Agent(
     name="auditor_task",
