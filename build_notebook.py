@@ -320,33 +320,38 @@ async for event in runner_tools.run_async(session_id=session_tools.id, user_id="
     # -------------------------------------------------------------
     # SECCIÓN 4: HUMAN IN THE LOOP
     # -------------------------------------------------------------
-    cells.append(make_cell("markdown", """## 4. Módulo 1: Human-in-the-Loop y Confirmación de Acciones Críticas
-En sistemas de producción nunca se debe permitir que un agente ejecute acciones irreversibles sin supervisión humana.
-Google ADK implementa esto mediante `FunctionTool`:
-* `require_confirmation=True` (confirmación incondicional).
-* `require_confirmation=callback_fn` (confirmación condicional basada en reglas o parámetros)."""))
+    cells.append(make_cell("markdown", """## 4. Módulo 1: Human-in-the-Loop (HITL) y Confirmación de Acciones Críticas
 
-    cells.append(make_cell("code", """from google.adk.tools import FunctionTool
+En sistemas de producción nunca se debe permitir que un agente autónomo ejecute acciones destructivas o irreversibles (como formatear volúmenes, reiniciar bases de datos en producción o procesar pagos) sin supervisión humana explícita.
 
-def reiniciar_servicio(servicio: str, forzar: bool = False) -> dict:
+### ¿Por qué HITL pertenece a una interfaz interactiva (`adk web`) y no a una celda de Notebook?
+* **En un Jupyter Notebook**, la ejecución es inherentemente síncrona y lineal. Interceptar llamadas que requieren confirmación humana exige pausar el bucle, capturar IDs de llamada, simular manualmente eventos de `FunctionResponse(confirmed=True)` y reinyectarlos al Runner. Esto resulta artificial e incómodo.
+* **Google ADK resuelve esto nativamente con ADK Web UI (`adk web`)**: Cuando una herramienta declara `require_confirmation`, el servidor de ADK Web **pausa la ejecución automáticamente** y presenta un modal interactivo en pantalla con botones para **Aprobar** (*Approve*) o **Rechazar** (*Reject*). Al pulsar el botón, la interfaz web envía la confirmación al agente y reanuda el flujo de manera natural.
+
+A continuación:
+1. Diseñamos la herramienta con política de confirmación mediante `FunctionTool(func, require_confirmation=...)`.
+2. Verificamos la política de seguridad con `check_require_confirmation()`.
+3. Exploramos el micro-agente interactivo creado en `hitl_agent/` listo para ser ejecutado con `adk web`."""))
+
+    cells.append(make_cell("code", """from google.adk.tools import FunctionTool, ToolContext
+
+def reiniciar_servicio(servicio: str, forzar: bool = False) -> str:
     \"\"\"Reinicia un servicio crítico de infraestructura.
 
     Args:
         servicio: Nombre del servicio (ej. 'nginx', 'postgresql', 'redis').
-        forzar: Si es True, fuerza la terminación inmediata.
-
-    Returns:
-        dict con el resultado de la operación.
+        forzar: Si es True, fuerza la terminación inmediata (SIGKILL).
     \"\"\"
-    return {
-        "status": "success",
-        "mensaje": f"Servicio '{servicio}' reiniciado exitosamente (forzado={forzar})."
-    }
+    modo = "FORZADO (SIGKILL)" if forzar else "GRACEFUL"
+    return f"✓ Servicio '{servicio}' reiniciado exitosamente en modo {modo}."
 
-def validar_aprobacion(servicio: str, forzar: bool = False, **kwargs) -> bool:
-    \"\"\"Regla: Exige confirmación si es una base de datos o si forzar es True.\"\"\"
-    servicios_criticos = ["postgresql", "redis", "mongodb"]
-    return (servicio.lower() in servicios_criticos) or forzar
+def validar_aprobacion(servicio: str = "", forzar: bool = False, **kwargs) -> bool:
+    \"\"\"Regla de Seguridad:
+    Requiere confirmación humana si el servicio es una base de datos crítica o si forzar=True.
+    \"\"\"
+    servicios_criticos = ["postgresql", "mysql", "production_db", "auth_service"]
+    es_critico = servicio.lower() in servicios_criticos
+    return forzar or es_critico
 
 # Envolvemos la función con confirmación condicional
 tool_reinicio_seguro = FunctionTool(
@@ -354,65 +359,64 @@ tool_reinicio_seguro = FunctionTool(
     require_confirmation=validar_aprobacion
 )
 
-agente_ops = Agent(
-    name="agente_devops_seguro",
-    model=local_model,
-    instruction="Eres un operador de sistemas. Si te piden reiniciar, llama a la herramienta reiniciar_servicio. Al confirmar la ejecución, reporta amablemente que la acción fue completada.",
-    tools=[tool_reinicio_seguro]
-)
+# Evaluamos la política contra diferentes escenarios operativos
+escenarios = [
+    {"servicio": "nginx", "forzar": False, "desc": "Servidor web estándar (parada limpia)"},
+    {"servicio": "postgresql", "forzar": False, "desc": "Base de datos principal (servicio crítico)"},
+    {"servicio": "redis", "forzar": True, "desc": "Servicio de caché (reinicio forzado)"},
+]
 
-session_hitl = await session_service.create_session(app_name="agente_ops_app", session_id="sesion_03_hitl", user_id="ops_lead", state={})
-runner_hitl = Runner(agent=agente_ops, app_name="agente_ops_app", session_service=session_service)
+print("🛡️ [EVALUACIÓN DE POLÍTICA DE SEGURIDAD HUMAN-IN-THE-LOOP]:\\n")
+for esc in escenarios:
+    args = {"servicio": esc["servicio"], "forzar": esc["forzar"]}
+    requiere_humano = await tool_reinicio_seguro.check_require_confirmation(args, None)
+    badge = "🔴 REQUIERE APROBACIÓN HUMANA" if requiere_humano else "🟢 EJECUCIÓN DIRECTA PERMITIDA"
+    print(f"• Escenario: {esc['desc']}")
+    print(f"  Argumentos: {args}")
+    print(f"  Decisión de ADK: {badge}\\n")
+"""))
 
-peticion = "Por favor reinicia el servicio postgresql de forma forzada."
-print(f"👤 [Usuario]: {peticion}\\n")
+    cells.append(make_cell("markdown", """### 4.1 Ejecución Interactiva del Agente HITL con `adk web`
 
-pending_confirmation = None
-print("--- [PASO 1]: Evaluación e Intercepción por el Runner de ADK ---")
-async for event in runner_hitl.run_async(session_id=session_hitl.id, user_id="ops_lead", prompt=peticion):
-    if hasattr(event, "actions") and event.actions and event.actions.requested_tool_confirmations:
-        for call_id, conf in event.actions.requested_tool_confirmations.items():
-            print(f"🛡️ [INTERCEPCIÓN DE SEGURIDAD]:")
-            print(f"   Operación crítica detectada: se requiere confirmación humana para ejecutar.")
-            pending_confirmation = call_id
-    text = extraer_texto(event)
-    if text and "requires confirmation" not in text.lower():
-        print(f"{text}\\n")
+Para probar la experiencia real con interfaz gráfica interactiva, hemos empaquetado este agente en el subdirectorio `hitl_agent/`:
 
-if pending_confirmation:
-    print("=" * 65)
-    print("👤 [PANEL DE DECISIÓN HUMANA (Human-in-the-Loop)]")
-    session_data = await session_service.get_session(app_name="agente_ops_app", session_id=session_hitl.id, user_id="ops_lead")
-    fc_name = "reiniciar_servicio"
-    for ev in session_data.events:
-        for fc in ev.get_function_calls():
-            if fc.id == pending_confirmation:
-                fc_name = fc.name
-                print(f"   • Herramienta interceptada: {fc.name}")
-                print(f"   • Parámetros solicitados: {fc.args}")
-                print(f"   • Regla aplicada: Base de datos sensible con opción 'forzar=True'.")
-    
-    print("   ✅ DECISIÓN HUMANA: APROBAR la operación forzada.")
-    print("=" * 65 + "\\n")
-    
-    from google.genai import types
-    confirm_msg = types.Content(
-        role="user",
-        parts=[
-            types.Part(
-                function_response=types.FunctionResponse(
-                    id=pending_confirmation,
-                    name=fc_name,
-                    response={"confirmed": True}
-                )
-            )
-        ]
-    )
-    print("--- [PASO 2]: Reanudando ejecución del agente con aprobación humana ---")
-    async for event in runner_hitl.run_async(session_id=session_hitl.id, user_id="ops_lead", new_message=confirm_msg):
-        text = extraer_texto(event)
-        if text:
-            print(f"{text}\\n")
+```
+hitl_agent/
+├── __init__.py     # Exporta root_agent
+├── agent.py        # Define el agente DevOps con tool_reinicio_seguro y modelo local
+└── README.md       # Guía de pruebas y escenarios
+```
+
+#### 🚀 Comando para lanzar el agente interactivo en tu terminal:
+
+```bash
+adk web hitl_agent --port 8000
+```
+*(O desde el entorno virtual: `.venv/bin/adk web hitl_agent --port 8000`)*
+
+Luego abre en tu navegador: **[http://localhost:8000](http://localhost:8000)**
+
+**Prueba estos dos mensajes en el chat de la Web UI:**
+1. *"Reinicia el servicio nginx de forma normal"* $\\\\rightarrow$ Se ejecuta de inmediato.
+2. *"Por favor reinicia el servicio postgresql de forma forzada"* $\\\\rightarrow$ **ADK Web detendrá la ejecución y mostrará un modal interactivo solicitando tu aprobación (`Approve` / `Reject`)** antes de continuar."""))
+
+    cells.append(make_cell("code", """from pathlib import Path
+from google.adk.cli.utils.agent_loader import AgentLoader
+
+# 1. Verificar la estructura del paquete standalone
+ruta_agente = Path("hitl_agent/agent.py")
+print(f"📄 Ruta del agente standalone: {ruta_agente.resolve()}")
+print(f"   Tamaño: {ruta_agente.stat().st_size} bytes\\n")
+
+# 2. Cargar el agente usando el cargador oficial de ADK
+loader = AgentLoader(".")
+agente_hitl = loader.load_agent("hitl_agent")
+
+print(f"✓ Agente descubierto por ADK Web: {agente_hitl.name}")
+print(f"✓ Herramientas protegidas con HITL: {[t.name for t in agente_hitl.tools]}")
+print(f"✓ Modelo asignado: {getattr(agente_hitl.model, 'model', str(agente_hitl.model))}")
+print("\\n💡 Recuerda: ejecuta en tu terminal para probar la UI interactiva:")
+print("   adk web hitl_agent --port 8000")
 """))
 
     # -------------------------------------------------------------
