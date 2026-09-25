@@ -7,15 +7,17 @@ Uso:
 Abre automáticamente las diapositivas interactivas en tu navegador web predeterminado.
 """
 
+import argparse
 import os
 import sys
 import webbrowser
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 import socket
 
-PORT = 8000
+# Puerto por defecto: 5050 (deja el puerto 8000 libre para Google ADK Web UI)
+DEFAULT_PORT = 5050
 
-def encontrar_puerto_disponible(puerto_inicial=8000):
+def encontrar_puerto_disponible(puerto_inicial=DEFAULT_PORT):
     puerto = puerto_inicial
     while puerto < puerto_inicial + 100:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -25,10 +27,14 @@ def encontrar_puerto_disponible(puerto_inicial=8000):
     return puerto_inicial
 
 def main():
+    parser = argparse.ArgumentParser(description="Lanzador de diapositivas interactivas - Google ADK 2.0")
+    parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="Puerto para el servidor (default: 5050)")
+    args = parser.parse_args()
+
     directorio_raiz = os.path.dirname(os.path.abspath(__file__))
     os.chdir(directorio_raiz)
 
-    puerto = encontrar_puerto_disponible(PORT)
+    puerto = encontrar_puerto_disponible(args.port)
     url = f"http://localhost:{puerto}/diapositivas/slides.html"
 
     print("=" * 65)

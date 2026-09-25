@@ -175,7 +175,7 @@ La presentación cuenta con navegación fluida, diseño responsive, barra de pro
   ```bash
   python3 run_slides.py
   ```
-  Esto inicia un servidor local y abre automáticamente las diapositivas en tu navegador en `http://localhost:8000/diapositivas/slides.html`.
+  Esto inicia un servidor local y abre automáticamente las diapositivas en tu navegador en `http://localhost:5050/diapositivas/slides.html` (dejando el puerto `8000` 100% libre para **ADK Web UI**).
 
 - **Opción B (Directo en macOS):**
   ```bash
